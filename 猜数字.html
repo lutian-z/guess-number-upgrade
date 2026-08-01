@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>猜数字升级版</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+<style>
+/* ============ 基础变量与全局 ============ */
+:root{
+  --bg:#f6f5f1;
+  --card:#ffffff;
+  --ink:#3a372f;
+  --ink-soft:#7d786c;
+  --line:#ece7dc;
+  --accent:#e89b1c;
+  --accent-deep:#c77f08;
+  --a-green:#1fa36b;
+  --a-green-bg:#e4f6ec;
+  --b-rose:#df5b72;
+  --b-rose-bg:#fcebef;
+  --gold:#f0a832;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Noto Sans SC",sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+button{font-family:inherit}
+
+/* ============ 漂浮数字粒子背景 ============ */
+.particle{
+  position:fixed;
+  z-index:0;
+  font-family:var(--mono);
+  font-weight:700;
+  color:#a39470;
+  opacity:.05;
+  pointer-events:none;
+  animation-name:floatY;
+  animation-timing-function:ease-in-out;
+  animation-iteration-count:infinite;
+  animation-direction:alternate;
+}
+@keyframes floatY{from{transform:translateY(0)}to{transform:translateY(-46px)}}
+
+/* ============ 顶栏 ============ */
+.topbar{
+  position:fixed;top:0;left:0;right:0;height:60px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 22px;
+  background:rgba(255,255,255,.72);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+  z-index:50;
+}
+.logo{
+  display:flex;align-items:center;gap:10px;
+  font-family:"ZCOOL KuaiLe",sans-serif;font-size:22px;
+  animation:breathe 3.2s ease-in-out infinite;
+}
+@keyframes breathe{
+  0%,100%{text-shadow:0 0 0 rgba(240,168,50,0)}
+  50%{text-shadow:0 0 16px rgba(240,168,50,.6)}
+}
+.logo-badge{
+  width:34px;height:34px;border-radius:10px;
+  background:linear-gradient(135deg,#f5b942,#e8960f);
+  color:#fff;display:grid;place-items:center;font-size:18px;
+  box-shadow:0 4px 10px rgba(232,155,28,.35);
+}
+.topnav{display:flex;gap:8px}
+
+/* ============ 主区域与卡片 ============ */
+main{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:84px 18px 64px}
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:16px;
+  box-shadow:0 8px 28px rgba(84,72,48,.06);
+  padding:26px 28px;
+  margin-bottom:22px;
+  animation:fadeUp .55s both;
+}
+.d1{animation-delay:.05s}.d2{animation-delay:.15s}.d3{animation-delay:.25s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.card h2{
+  font-family:"ZCOOL KuaiLe",sans-serif;font-size:24px;font-weight:400;
+  display:flex;align-items:center;gap:10px;margin-bottom:14px;
+}
+.card h2::before{content:"";width:6px;height:22px;border-radius:3px;background:linear-gradient(180deg,#f5b942,#e8960f)}
+.hidden{display:none}
+
+/* ============ 按钮 ============ */
+.btn{
+  border:none;border-radius:12px;padding:11px 22px;
+  font-size:15px;font-weight:700;cursor:pointer;
+  transition:transform .15s,box-shadow .15s,opacity .15s;
+}
+.btn:active{transform:scale(.95)}
+.btn-primary{
+  background:linear-gradient(135deg,#f5b942,#e8960f);
+  color:#fff;box-shadow:0 6px 16px rgba(232,155,28,.35);
+}
+.btn-primary:hover:not(:disabled){transform:translateY(-2px)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+.btn-ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink-soft)}
+.btn-ghost:hover{transform:translateY(-2px);border-color:#ddd3bd;color:var(--ink)}
+.btn-sm{padding:7px 14px;font-size:13px;border-radius:10px}
+
+/* ============ 规则卡片 ============ */
+.rule{margin:12px 0;line-height:1.95;color:#4b463c;text-align:justify}
+.rule .seq{
+  font-family:var(--mono);font-weight:700;color:var(--accent-deep);
+  background:#fdf6e7;border:1px solid #f3e2b8;border-radius:6px;padding:1px 7px;
+  white-space:nowrap;
+}
+.rule .fa{color:var(--a-green);font-weight:700}
+.rule .fb{color:var(--b-rose);font-weight:700}
+
+/* ---- 演示动画区 ---- */
+.demo{
+  position:relative;
+  margin-top:18px;
+  background:#fbfaf7;
+  border:1.5px dashed #e4dccb;
+  border-radius:14px;
+  padding:16px 18px 12px;
+  height:340px;
+  display:flex;flex-direction:column;
+}
+.demo-answer{display:flex;align-items:center;gap:14px}
+.demo-label{font-size:13px;color:var(--ink-soft);white-space:nowrap}
+.dtiles{display:flex;gap:8px}
+.dtile{
+  width:38px;height:38px;border-radius:9px;
+  border:1.5px solid #ddd5c4;background:#fff;
+  display:grid;place-items:center;
+  font-family:var(--mono);font-size:18px;font-weight:700;
+  opacity:0;transform:translateY(8px);
+  transition:opacity .35s,transform .35s,background .3s,border-color .3s,color .3s;
+}
+.dtile.show{opacity:1;transform:none}
+.dtile.maskd{color:#c9c1ac;font-weight:400}
+.dtile.mark-a{background:var(--a-green-bg);border-color:var(--a-green);color:var(--a-green)}
+.dtile.mark-b{background:var(--b-rose-bg);border-color:var(--b-rose);color:var(--b-rose)}
+.dtile.confirmed{background:var(--a-green);border-color:var(--a-green);color:#fff}
+.demo-rows{flex:1;display:flex;flex-direction:column;justify-content:space-evenly;margin:8px 0 4px}
+.drow{
+  display:flex;align-items:center;gap:16px;
+  padding:5px 18px;border-radius:10px;
+  border:1.5px solid transparent;
+  transition:border-color .3s,background .3s;
+}
+.drow.current{border-color:#f2cf8d;background:#fffaf0}
+.drow .dtile{width:32px;height:32px;font-size:15px;transform:translateX(-12px)}
+.dfb{font-family:var(--mono);font-weight:700;font-size:16px;opacity:0;transition:opacity .3s;font-style:normal}
+.dfb.show{opacity:1}
+.dfb i{font-style:normal;margin-right:4px}
+.dfb .a{color:var(--a-green)}
+.dfb .b{color:var(--b-rose)}
+.dfb .zero{color:#a9a294}
+.demo-win{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.demo-win span{
+  font-family:"ZCOOL KuaiLe",sans-serif;font-size:46px;color:var(--accent-deep);
+  opacity:0;transform:scale(.6);
+  text-shadow:0 4px 18px rgba(232,155,28,.35);
+}
+.demo-win.show span{animation:winPop .6s cubic-bezier(.2,1.6,.4,1) forwards}
+@keyframes winPop{to{opacity:1;transform:scale(1)}}
+.demo-ctrl{display:flex;gap:8px;justify-content:flex-end}
+.mini-btn{
+  border:1.5px solid var(--line);background:#fff;color:var(--ink-soft);
+  border-radius:8px;padding:4px 12px;font-size:12px;cursor:pointer;transition:.15s;
+}
+.mini-btn:hover{border-color:#e3cfa4;color:var(--accent-deep);transform:translateY(-1px)}
+
+/* ============ 设置区 ============ */
+.setup-grid{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:13px;color:var(--ink-soft)}
+select{
+  appearance:none;-webkit-appearance:none;
+  padding:10px 38px 10px 14px;
+  border:1.5px solid var(--line);border-radius:10px;
+  background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237d786c' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 13px center;
+  font-size:15px;color:var(--ink);cursor:pointer;min-width:126px;
+}
+select:focus{border-color:var(--accent);outline:none}
+.diff-box{flex:1;min-width:280px;display:flex;flex-direction:column;gap:8px}
+.diff-display{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 14px;min-height:48px;
+  border:1.5px solid var(--line);border-radius:10px;background:#fbfaf7;
+}
+.stars{color:var(--gold);letter-spacing:2px;font-size:15px}
+.stars .empty{color:#e3ddcd}
+.diff-label{font-weight:700}
+.diff-val{font-family:var(--mono);color:var(--ink-soft)}
+.chances-chip{
+  margin-left:auto;
+  background:#fdf3e0;color:#a96e0a;border:1px solid #f3dcae;
+  padding:3px 11px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap;
+}
+.not-rec{color:#d6455a;font-weight:700}
+.bounce{animation:pop .35s}
+@keyframes pop{40%{transform:scale(1.045)}}
+.slider-row{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;color:#b0a892}
+input[type=range]{flex:1;accent-color:var(--accent);height:24px;cursor:pointer}
+input[type=range]:disabled{opacity:.3;cursor:not-allowed}
+.diff-note{font-size:12px;color:#a89f8a;line-height:1.6}
+.start-btn{font-size:16px;padding:13px 30px}
+
+/* ============ 游戏进行区 ============ */
+.info-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.chip{
+  display:flex;align-items:center;gap:6px;
+  background:#fbfaf7;border:1px solid var(--line);border-radius:999px;
+  padding:5px 13px;font-size:13px;
+}
+.chip b{font-family:var(--mono)}
+.chip .stars{font-size:12px;letter-spacing:1px}
+.chip.remain{border-color:#f3dcae;background:#fdf6e7;color:#a96e0a;font-weight:700}
+.chip.remain.low{background:#fdeaea;border-color:#f3c2c2;color:#c73d3d;animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.07)}}
+.info-actions{margin-left:auto;display:flex;gap:8px}
+.progress{height:6px;background:#f0ece3;border-radius:99px;margin-top:14px;overflow:hidden}
+.progress i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#f5b942,#e8960f);transition:width .35s}
+
+/* ---- 猜测记录 ---- */
+.records{display:grid;gap:10px;margin-top:16px}
+.rec{
+  display:flex;align-items:center;gap:9px;
+  background:#fbfaf7;border:1.5px solid var(--line);border-radius:10px;
+  padding:6px 10px;
+  animation:slideIn .3s both;
+}
+@keyframes slideIn{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+.rec.latest{border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,155,28,.13)}
+.rec-idx{font-family:var(--mono);font-size:11px;color:#b0a892;min-width:22px}
+.rec-seq{display:flex;gap:4px}
+.rtile{
+  width:24px;height:28px;border-radius:6px;
+  background:#fff;border:1px solid #e2dccc;
+  display:grid;place-items:center;
+  font-family:var(--mono);font-size:14px;font-weight:700;
+}
+.rtile.mask{color:#b6ae9c;font-weight:400}
+.records.tiny .rtile{width:19px;height:24px;font-size:11px}
+.records.tiny .rec{gap:6px;padding:5px 8px}
+.records.tiny .rec-fb{font-size:12px}
+.rec-fb{margin-left:auto;font-family:var(--mono);font-weight:700;font-size:14px;white-space:nowrap;display:flex;align-items:center;gap:2px}
+.rec-fb .a{color:var(--a-green)}
+.rec-fb .b{color:var(--b-rose)}
+.rec-fb .zero{color:#a9a294}
+.rec.success{border-color:#b9e5d0;background:#f2fbf6}
+.hit-mark{color:var(--a-green);margin-left:5px;font-size:13px}
+
+/* ---- 结果横幅 ---- */
+.banner{display:none;margin-top:18px;border-radius:14px;padding:18px 22px;align-items:center;gap:16px;flex-wrap:wrap}
+.banner.show{display:flex;animation:fadeUp .45s both}
+.banner.win{background:linear-gradient(135deg,#e6f7ef,#f3fcf7);border:1.5px solid #b9e5d0}
+.banner.lose{background:linear-gradient(135deg,#fdeef0,#fef6f7);border:1.5px solid #f2c6cd}
+.banner h3{font-family:"ZCOOL KuaiLe",sans-serif;font-size:26px;font-weight:400}
+.banner.win h3{color:#157a4f}
+.banner.lose h3{color:#c73d3d}
+.banner p{color:var(--ink-soft);font-size:14px;margin-top:4px}
+.banner-answer{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.atile{
+  width:36px;height:44px;border-radius:8px;background:#fff;
+  display:grid;place-items:center;
+  font-family:var(--mono);font-size:20px;font-weight:700;
+  border:1.5px solid;
+}
+.banner.win .atile{border-color:#8ed4b6;color:#157a4f}
+.banner.lose .atile{border-color:#eda7b1;color:#c73d3d}
+
+/* ---- 输入区 ---- */
+.input-zone{margin-top:20px}
+.slots{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.slot{
+  width:46px;height:56px;border-radius:12px;
+  border:2px dashed #d9d2c0;background:#fbfaf7;
+  display:grid;place-items:center;
+  font-family:var(--mono);font-size:24px;font-weight:700;
+  cursor:pointer;transition:transform .15s,border-color .15s,background .15s;
+  user-select:none;
+}
+.slot:hover{transform:translateY(-2px)}
+.slot.filled{border-style:solid;border-color:var(--accent);background:#fffdf6}
+.slot.masked{border-style:solid;border-color:#cfc7b2;color:#b0a892}
+.keypad{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.key{
+  position:relative;
+  width:46px;height:46px;border-radius:12px;
+  border:1.5px solid var(--line);background:#fff;
+  font-family:var(--mono);font-size:19px;font-weight:700;color:var(--ink);
+  cursor:pointer;transition:transform .15s,border-color .15s,opacity .15s;
+}
+.key:hover:not(:disabled){border-color:var(--accent);transform:translateY(-2px)}
+.key:disabled{opacity:.3;cursor:not-allowed;background:#f3f1ea}
+.key.mask-key{color:#a89f8a}
+.key .badge{
+  position:absolute;top:-8px;right:-9px;
+  background:var(--accent);color:#fff;
+  font-family:"Noto Sans SC",sans-serif;font-size:10px;font-weight:700;
+  border-radius:99px;padding:1px 6px;white-space:nowrap;
+}
+.action-row{display:flex;gap:10px;justify-content:center;margin-top:16px}
+.hint-keys{text-align:center;font-size:12px;color:#b6ae9c;margin-top:12px}
+.shake{animation:shakeX .4s}
+@keyframes shakeX{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+
+/* ---- 提示气泡 ---- */
+.toast{
+  position:fixed;top:74px;left:50%;
+  transform:translate(-50%,-16px);
+  background:#3a372f;color:#fff;
+  padding:10px 22px;border-radius:999px;font-size:14px;
+  opacity:0;pointer-events:none;transition:.25s;z-index:99;
+  box-shadow:0 8px 24px rgba(0,0,0,.18);
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ============ 响应式 ============ */
+@media (max-width:720px){
+  main{padding:76px 12px 48px}
+  .card{padding:20px 16px}
+  .demo{height:300px;padding:12px}
+  .dtile{width:30px;height:30px;font-size:15px}
+  .drow .dtile{width:26px;height:26px;font-size:12px}
+  .drow{gap:10px;padding:4px 12px}
+  .dfb{font-size:13px}
+  .demo-win span{font-size:36px}
+  .slot{width:38px;height:48px;font-size:20px}
+  .key{width:40px;height:40px;font-size:16px}
+  .atile{width:30px;height:38px;font-size:16px}
+  .banner-answer{margin-left:0}
+  .info-actions{margin-left:0;width:100%}
+  .setup-grid{align-items:stretch}
+  .start-btn{width:100%}
+}
+</style>
+</head>
+<body>
+<div id="particles"></div>
+
+<!-- ============ 顶栏 ============ -->
+<header class="topbar">
+  <div class="logo"><span class="logo-badge">猜</span><span>猜数字升级版</span></div>
+  <nav class="topnav">
+    <button class="btn btn-ghost btn-sm" id="navRules">规则</button>
+    <button class="btn btn-ghost btn-sm" id="navNew">新对局</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ============ 规则卡片 ============ -->
+  <section class="card d1" id="rulesCard">
+    <h2>游戏规则</h2>
+    <p class="rule">
+      系统会随机生成一个 <b>x</b> 位的数字，每一位都互不相同（取自 0–9，首位允许为 0）。你每次提交一个 x 位的猜测序列，但只能填写其中 <b>y</b> 个位置，其余位置用遮蔽符 <span class="seq">-</span> 占位——遮蔽符表示"这个位置我这次不猜"，完全不参与比较。同一次猜测中每个数字最多使用一次，遮蔽符恰好使用 x−y 次；当 x=y 时没有遮蔽符，每次猜满整串数字。
+    </p>
+    <p class="rule">
+      提交后，系统只针对你填了数字的 y 个位置给出"<span class="fa">几A</span><span class="fb">几B</span>"的反馈：<span class="fa">A</span> 表示数字对、位置也对，<span class="fb">B</span> 表示数字确实在答案中、但不在你猜的位置上，遮蔽符所在的位置一概忽略。举个例子：假设答案是 <span class="seq">38157</span>，你猜 <span class="seq">365--</span>，则第 1 位的 3 得到一个 A，第 3 位的 5 得到一个 B，反馈为 <span class="fa">1A</span><span class="fb">1B</span>——由此可知第 1 位确定是 3，而 5 在答案中但不在第 3 位。下方的动画演示了这组例子的完整推理过程。
+    </p>
+    <p class="rule">
+      当你猜出的所有 yA0B 中的 A 合起来覆盖了答案的全部 <b>x</b> 个位置，游戏获胜（对 x=y 来说就是一次完全命中）。比如 x=10、y=5、答案是 <span class="seq">0123456789</span> 时，只要猜出 <span class="seq">01234-----</span> 和 <span class="seq">-----56789</span> 两个 5A0B，10 个位置就全被 A 覆盖，即告获胜；机会用尽仍未覆盖全部位置则失败并公布答案。机会次数与难度系数挂钩，最容易的 2 位题有 9 次机会，最难的大师级组合有 31 次；标红"不推荐"的组合体验极差，执意挑战也可开局，统一按 31 次计。
+    </p>
+
+    <!-- 演示动画区：展示 x=5, y=3 的完整例子 -->
+    <div class="demo" id="demo">
+      <div class="demo-answer">
+        <span class="demo-label">答案</span>
+        <div class="dtiles" id="demoAnswer"></div>
+      </div>
+      <div class="demo-rows" id="demoRows"></div>
+      <div class="demo-win" id="demoWin"><span>胜利！</span></div>
+      <div class="demo-ctrl">
+        <button class="mini-btn" id="demoReplay">↺ 重播</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 设置卡片 ============ -->
+  <section class="card d2" id="setupCard">
+    <h2>难度设置</h2>
+    <div class="setup-grid">
+      <div class="field">
+        <label for="selX">答案位数</label>
+        <select id="selX"></select>
+      </div>
+      <div class="field">
+        <label for="selY">每次猜测位数</label>
+        <select id="selY"></select>
+      </div>
+      <div class="diff-box">
+        <div class="diff-display" id="diffDisplay"></div>
+        <div class="slider-row">
+          <span>0.5</span>
+          <input type="range" id="diffSlider" min="0.5" max="5.0" step="0.1" value="0.8">
+          <span>5.0</span>
+        </div>
+        <div class="diff-note">滑块只会吸附在 34 个有效难度上，与下拉菜单双向联动；"不推荐"组合不参与滑块。机会次数 N = 四舍五入(6 + 5 × 难度系数)。</div>
+      </div>
+      <button class="btn btn-primary start-btn" id="startBtn">开始游戏</button>
+    </div>
+  </section>
+
+  <!-- ============ 游戏卡片 ============ -->
+  <section class="card d3 hidden" id="gameCard">
+    <div class="info-bar">
+      <span id="infoChips" style="display:contents"></span>
+      <div class="info-actions">
+        <button class="btn btn-ghost btn-sm" id="restartBtn">换题重开</button>
+        <button class="btn btn-ghost btn-sm" id="resetBtn">重新设置</button>
+      </div>
+    </div>
+    <div class="progress"><i id="progFill"></i></div>
+    <div class="records" id="records"></div>
+    <div class="banner" id="banner"></div>
+    <div class="input-zone" id="inputZone">
+      <div class="slots" id="slots"></div>
+      <div class="keypad" id="keypad"></div>
+      <div class="action-row">
+        <button class="btn btn-ghost" id="backBtn">退格</button>
+        <button class="btn btn-primary" id="submitBtn">提交猜测</button>
+      </div>
+      <div class="hint-keys">键盘操作：0–9 填数字 · - 填遮蔽符 · Backspace 退格 · Enter 提交</div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+
+/* ============================================================
+ * 难度系数表（34 个有效组合，文档第五节）
+ * ============================================================ */
+const DIFF_TABLE = {
+  "2,2":0.5, "3,3":0.6, "4,4":0.8, "5,5":1.0, "10,10":1.1, "6,6":1.3, "7,7":1.5, "9,9":1.6, "8,8":1.8,
+  "3,2":2.0, "10,9":2.1, "9,8":2.3, "4,3":2.5, "8,7":2.6, "7,6":2.8, "6,5":3.0, "5,4":3.2, "4,2":3.4,
+  "10,8":3.5, "9,7":3.6, "8,6":3.7, "7,5":3.8, "6,4":3.9, "5,3":4.0, "7,4":4.1, "6,3":4.2, "10,7":4.3,
+  "9,6":4.4, "8,5":4.5, "10,6":4.6, "9,5":4.7, "10,5":4.8, "8,4":4.9, "7,3":5.0
+};
+
+/* "不推荐"组合（文档第五节）。注意：文档遗漏的 (9,4) 既不在难度表中
+ * 也未被点名，凡是查不到难度系数的组合一律按"不推荐"处理，可正常开局。 */
+const NOT_REC = new Set([
+  "2,1","3,1","4,1","5,1","6,1","7,1","8,1","9,1","10,1",
+  "5,2","6,2","7,2","8,2","9,2","10,2",
+  "8,3","9,3","10,3","10,4"
+]);
+
+const VALID_DIFFS = Object.values(DIFF_TABLE).sort((a,b)=>a-b);
+const DIFF_TO_COMBO = {};   // "0.5" -> [2,2]
+Object.entries(DIFF_TABLE).forEach(([k,d])=>{ DIFF_TO_COMBO[d.toFixed(1)] = k.split(",").map(Number); });
+
+/* ============================================================
+ * 机会次数算法：N = 四舍五入(6 + 5 × 难度系数)
+ * 基准锚点 x=y=4（难度0.8）→ 10 次；最易 9 次，最难 31 次。
+ * 不推荐组合超出难度表，统一按最高档 31 次。
+ * ============================================================ */
+const MAX_CHANCES = Math.round(6 + 5 * 5.0);   // 31
+function chancesOf(x, y){
+  const d = DIFF_TABLE[x + "," + y];
+  return d === undefined ? MAX_CHANCES : Math.round(6 + 5 * d);
+}
+
+/* 难度系数 -> 文字标签（文档第六节） */
+function diffLabel(d){
+  if(d <= 1.0) return "入门";
+  if(d <= 1.8) return "轻松";
+  if(d <= 2.8) return "适中";
+  if(d <= 3.8) return "困难";
+  if(d <= 4.6) return "极难";
+  return "大师";
+}
+/* 星级：四舍五入到整数颗，满 5 颗 */
+function starCount(d){ return Math.min(5, Math.max(1, Math.round(d))); }
+function starsHtml(d){
+  const n = starCount(d);
+  return `<span class="stars">${"★".repeat(n)}<span class="empty">${"☆".repeat(5-n)}</span></span>`;
+}
+
+/* ============================================================
+ * 漂浮数字粒子背景
+ * ============================================================ */
+(function initParticles(){
+  const box = $("particles");
+  for(let i=0;i<16;i++){
+    const s = document.createElement("span");
+    s.className = "particle";
+    s.textContent = Math.floor(Math.random()*10);
+    s.style.left = Math.random()*100 + "%";
+    s.style.top  = Math.random()*100 + "%";
+    s.style.fontSize = (22 + Math.random()*44) + "px";
+    s.style.animationDuration = (10 + Math.random()*14) + "s";
+    s.style.animationDelay = (-Math.random()*10) + "s";
+    box.appendChild(s);
+  }
+})();
+
+/* ============================================================
+ * 设置区：下拉菜单 + 难度显示 + 滑块，三者双向联动
+ * ============================================================ */
+const selX = $("selX"), selY = $("selY"), slider = $("diffSlider"), diffDisplay = $("diffDisplay");
+let lastRawSlider = parseFloat(slider.value);
+
+function initSelects(){
+  for(let x=2;x<=10;x++) selX.add(new Option(x + " 位", x));
+  selX.value = "4";
+  rebuildYOptions(4);
+  selY.value = "4";
+}
+function rebuildYOptions(x){
+  const prev = parseInt(selY.value) || 0;
+  selY.innerHTML = "";
+  for(let y=1;y<=x;y++) selY.add(new Option(y + " 位", y));
+  selY.value = String(Math.min(Math.max(prev,1), x));
+}
+
+/* 刷新难度显示区域（含机会次数），并同步滑块位置 */
+function updateDifficultyUI(){
+  const x = +selX.value, y = +selY.value;
+  const d = DIFF_TABLE[x + "," + y];
+  const chances = chancesOf(x, y);
+  diffDisplay.classList.remove("bounce");
+  void diffDisplay.offsetWidth;            // 重启动画
+  diffDisplay.classList.add("bounce");
+  if(d === undefined){
+    diffDisplay.innerHTML =
+      `<span class="not-rec">不推荐 · 纯折磨</span>` +
+      `<span class="chances-chip">${chances} 次机会</span>`;
+    slider.disabled = true;
+  }else{
+    diffDisplay.innerHTML =
+      starsHtml(d) +
+      `<span class="diff-label">${diffLabel(d)}</span>` +
+      `<span class="diff-val">${d.toFixed(1)}</span>` +
+      `<span class="chances-chip">${chances} 次机会</span>`;
+    slider.disabled = false;
+    slider.value = d.toFixed(1);
+    lastRawSlider = d;
+  }
+}
+
+selX.addEventListener("change", ()=>{ rebuildYOptions(+selX.value); updateDifficultyUI(); });
+selY.addEventListener("change", updateDifficultyUI);
+
+/* 滑块吸附：只停留在 34 个有效难度值上；并列距离时按拖动方向取舍，避免卡死 */
+function nearestValid(v, dir){
+  let bestDist = Infinity;
+  for(const d of VALID_DIFFS) bestDist = Math.min(bestDist, Math.abs(d - v));
+  const ties = VALID_DIFFS.filter(d => Math.abs(Math.abs(d - v) - bestDist) < 1e-9);
+  return dir >= 0 ? Math.max(...ties) : Math.min(...ties);
+}
+slider.addEventListener("input", ()=>{
+  const v = parseFloat(slider.value);
+  const dir = v >= lastRawSlider ? 1 : -1;
+  lastRawSlider = v;
+  const snapped = nearestValid(v, dir);
+  if(Math.abs(snapped - v) > 1e-9){ slider.value = snapped.toFixed(1); lastRawSlider = snapped; }
+  const combo = DIFF_TO_COMBO[snapped.toFixed(1)];
+  selX.value = String(combo[0]);
+  rebuildYOptions(combo[0]);
+  selY.value = String(combo[1]);
+  updateDifficultyUI();
+});
+
+/* ============================================================
+ * 规则演示动画（x=5, y=3，答案 38157）
+ * ============================================================ */
+const DEMO = {
+  answer: [3,8,1,5,7],
+  steps: [
+    { g:[3,6,5,null,null], fb:[1,1], marks:[{i:0,c:"a"},{i:2,c:"b"}] },
+    { g:[null,8,null,5,7], fb:[3,0], marks:[{i:1,c:"a"},{i:3,c:"a"},{i:4,c:"a"}] },
+    { g:[null,8,1,5,null], fb:[3,0], marks:[{i:1,c:"a"},{i:2,c:"a"},{i:3,c:"a"}] },
+    { g:[3,null,null,5,7], fb:[3,0], marks:[{i:0,c:"a"},{i:3,c:"a"},{i:4,c:"a"}] }
+  ]
+};
+const demo = { timer:null, idx:0, plan:[], playing:false };
+
+function demoFbHtml(a, b){
+  return (a===0 && b===0) ? `<i class="zero">0A0B</i>` : `<i class="a">${a}A</i><i class="b">${b}B</i>`;
+}
+function buildDemoDOM(){
+  const ans = $("demoAnswer");
+  DEMO.answer.forEach(d=>{
+    const t = document.createElement("span");
+    t.className = "dtile"; t.textContent = d;
+    ans.appendChild(t);
+  });
+  const rows = $("demoRows");
+  DEMO.steps.forEach(st=>{
+    const r = document.createElement("div"); r.className = "drow";
+    const tiles = document.createElement("div"); tiles.className = "dtiles";
+    st.g.forEach(v=>{
+      const t = document.createElement("span");
+      t.className = "dtile" + (v===null ? " maskd" : "");
+      t.textContent = v===null ? "-" : v;
+      tiles.appendChild(t);
+    });
+    const fb = document.createElement("span");
+    fb.className = "dfb"; fb.innerHTML = demoFbHtml(st.fb[0], st.fb[1]);
+    r.appendChild(tiles); r.appendChild(fb);
+    rows.appendChild(r);
+  });
+}
+function buildDemoPlan(){
+  demo.plan = [];
+  // 1. 揭示答案
+  demo.plan.push([600, ()=>{
+    [...$("demoAnswer").children].forEach((t,i)=>{
+      t.style.transitionDelay = (i*90)+"ms";
+      t.classList.add("show");
+    });
+  }]);
+  // 2. 四次猜测：逐格出现 -> 反馈+高亮
+  DEMO.steps.forEach((st, si)=>{
+    demo.plan.push([si===0 ? 1100 : 1600, ()=>{
+      const rows = $("demoRows").children;
+      for(const r of rows) r.classList.remove("current");
+      const row = rows[si];
+      row.classList.add("current");
+      [...row.querySelectorAll(".dtile")].forEach((t,i)=>{
+        t.style.transitionDelay = (i*130)+"ms";
+        t.classList.add("show");
+      });
+    }]);
+    demo.plan.push([1150, ()=>{
+      const row = $("demoRows").children[si];
+      st.marks.forEach(({i,c})=>{
+        const t = row.querySelectorAll(".dtile")[i];
+        t.style.transitionDelay = "0ms";
+        t.classList.add(c==="a" ? "mark-a" : "mark-b");
+      });
+      row.querySelector(".dfb").classList.add("show");
+    }]);
+  });
+  // 3. 全部确认 -> 胜利
+  demo.plan.push([1500, ()=>{
+    [...$("demoAnswer").children].forEach((t,i)=>{
+      t.style.transitionDelay = (i*120)+"ms";
+      t.classList.add("confirmed");
+    });
+    $("demoWin").classList.add("show");
+  }]);
+}
+function resetDemoVisuals(){
+  [...$("demoAnswer").children].forEach(t=>{ t.className = "dtile"; t.style.transitionDelay = "0ms"; });
+  [...$("demoRows").children].forEach(r=>{
+    r.classList.remove("current");
+    [...r.querySelectorAll(".dtile")].forEach(t=>{
+      t.className = "dtile" + (t.textContent==="-" ? " maskd" : "");
+      t.style.transitionDelay = "0ms";
+    });
+    r.querySelector(".dfb").classList.remove("show");
+  });
+  $("demoWin").classList.remove("show");
+}
+function demoStep(){
+  if(!demo.playing) return;
+  if(demo.idx >= demo.plan.length){ demo.playing = false; return; }
+  const [delay, fn] = demo.plan[demo.idx++];
+  demo.timer = setTimeout(()=>{ fn(); demoStep(); }, delay);
+}
+/* 只保留重播：播完停在最终界面，重播则重置后重新播放一遍 */
+$("demoReplay").addEventListener("click", e=>{
+  demo.playing = false; clearTimeout(demo.timer);
+  resetDemoVisuals(); demo.idx = 0;
+  demo.playing = true; demoStep();
+  e.currentTarget.blur();
+});
+
+/* ============================================================
+ * 游戏状态与核心逻辑
+ * ============================================================ */
+const state = {
+  x:0, y:0, answer:[], total:0, used:0,
+  history:[],          // {seq, a, b}
+  covered:new Set(),   // 被所有 yA0B 中的 A 覆盖的位置下标，盖满 x 个即获胜
+  slots:[],            // null | {t:'d', v:n} | {t:'m'}
+  over:false
+};
+const gameCard=$("gameCard"), setupCard=$("setupCard"), recordsEl=$("records"),
+      slotsEl=$("slots"), keypadEl=$("keypad"), banner=$("banner"),
+      infoChips=$("infoChips"), progFill=$("progFill"), submitBtn=$("submitBtn"),
+      inputZone=$("inputZone"), toast=$("toast");
+let toastTimer = null;
+
+/* 生成答案：0-9 洗牌后取前 x 位，首位允许为 0 */
+function genAnswer(x){
+  const arr = [0,1,2,3,4,5,6,7,8,9];
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr.slice(0,x);
+}
+
+/* 评估猜测：只统计填了数字的位置 */
+function evaluate(){
+  let a=0, b=0;
+  state.slots.forEach((s,i)=>{
+    if(!s || s.t!=="d") return;
+    if(s.v === state.answer[i]) a++;
+    else if(state.answer.includes(s.v)) b++;
+  });
+  return {a, b};
+}
+
+function startGame(){
+  state.x = +selX.value;
+  state.y = +selY.value;
+  state.answer = genAnswer(state.x);
+  state.total = chancesOf(state.x, state.y);
+  state.used = 0;
+  state.history = [];
+  state.covered = new Set();
+  state.over = false;
+  state.slots = Array(state.x).fill(null);
+
+  recordsEl.innerHTML = "";
+  recordsEl.classList.toggle("tiny", state.x >= 7);
+  banner.className = "banner";
+  banner.innerHTML = "";
+  setupCard.classList.add("hidden");
+  gameCard.classList.remove("hidden");
+  gameCard.style.animation = "none"; void gameCard.offsetWidth; gameCard.style.animation = "";
+
+  buildSlots();
+  buildKeypad();
+  updateInfoBar();
+  renderInput();
+  layoutRecords();
+  gameCard.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+/* ---------- 信息栏 ---------- */
+function updateInfoBar(){
+  const d = DIFF_TABLE[state.x + "," + state.y];
+  const left = state.total - state.used;
+  const diffChip = d === undefined
+    ? `<span class="chip"><span class="not-rec">不推荐</span></span>`
+    : `<span class="chip">${starsHtml(d)}&nbsp;${diffLabel(d)} ${d.toFixed(1)}</span>`;
+  infoChips.innerHTML =
+    `<span class="chip">答案 <b>${state.x} 位</b></span>` +
+    `<span class="chip">每次猜 <b>${state.y} 位</b></span>` +
+    diffChip +
+    `<span class="chip">已用 <b>${state.used} / ${state.total}</b> 次</span>` +
+    `<span class="chip remain ${left<=3 ? "low" : ""}">剩余 ${left}</span>`;
+  progFill.style.width = (state.used / state.total * 100) + "%";
+}
+
+/* ---------- 输入区 ---------- */
+function buildSlots(){
+  slotsEl.innerHTML = "";
+  for(let i=0;i<state.x;i++){
+    const d = document.createElement("div");
+    d.className = "slot";
+    d.addEventListener("click", ()=>removeAt(i));
+    slotsEl.appendChild(d);
+  }
+}
+function buildKeypad(){
+  keypadEl.innerHTML = "";
+  for(let n=0;n<=9;n++){
+    const b = document.createElement("button");
+    b.className = "key"; b.textContent = n; b.dataset.n = n;
+    b.addEventListener("click", ()=>{ pressDigit(n); b.blur(); });
+    keypadEl.appendChild(b);
+  }
+  if(state.x > state.y){
+    const m = document.createElement("button");
+    m.className = "key mask-key"; m.id = "maskKey";
+    m.innerHTML = `-<span class="badge" id="maskBadge"></span>`;
+    m.addEventListener("click", ()=>{ pressMask(); m.blur(); });
+    keypadEl.appendChild(m);
+  }
+}
+const digitCount = ()=> state.slots.filter(s=>s && s.t==="d").length;
+const maskCount  = ()=> state.slots.filter(s=>s && s.t==="m").length;
+
+function pressDigit(n){
+  if(state.over) return;
+  if(state.slots.some(s=>s && s.t==="d" && s.v===n)) return;   // 每次猜测每个数字只用一次
+  if(digitCount() >= state.y) return;
+  const i = state.slots.findIndex(s=>!s);
+  if(i < 0) return;
+  state.slots[i] = {t:"d", v:n};
+  renderInput();
+}
+function pressMask(){
+  if(state.over) return;
+  if(maskCount() >= state.x - state.y) return;                 // 遮蔽符恰好 x-y 个
+  const i = state.slots.findIndex(s=>!s);
+  if(i < 0) return;
+  state.slots[i] = {t:"m"};
+  renderInput();
+}
+function removeAt(i){
+  if(state.over) return;
+  if(state.slots[i]){ state.slots[i] = null; renderInput(); }
+}
+function backspace(){
+  if(state.over) return;
+  for(let i=state.x-1;i>=0;i--){
+    if(state.slots[i]){ state.slots[i] = null; renderInput(); return; }
+  }
+}
+
+/* 同步槽位、按键、提交按钮的可用状态 */
+function renderInput(){
+  [...slotsEl.children].forEach((el,i)=>{
+    const s = state.slots[i];
+    el.className = "slot" + (s ? (s.t==="d" ? " filled" : " masked") : "");
+    el.textContent = s ? (s.t==="d" ? s.v : "-") : "";
+  });
+  const dc = digitCount(), mc = maskCount();
+  keypadEl.querySelectorAll(".key[data-n]").forEach(b=>{
+    const n = +b.dataset.n;
+    b.disabled = state.over || dc >= state.y || state.slots.some(s=>s && s.t==="d" && s.v===n);
+  });
+  const mk = $("maskKey");
+  if(mk){
+    const leftMask = state.x - state.y - mc;
+    mk.disabled = state.over || leftMask <= 0 || !state.slots.some(s=>!s);
+    $("maskBadge").textContent = "剩 " + leftMask;
+  }
+  submitBtn.disabled = state.over || !(dc === state.y && mc === state.x - state.y);
+}
+
+/* ---------- 提交猜测 ---------- */
+function submitGuess(){
+  if(state.over || submitBtn.disabled) return;
+  const seq = state.slots.map(s=> s && s.t==="d" ? String(s.v) : "-").join("");
+  // 重复猜测：不消耗次数，提示 + 抖动
+  if(state.history.some(h=>h.seq === seq)){
+    showToast("这个组合已经猜过了，请换一个");
+    inputZone.classList.remove("shake");
+    void inputZone.offsetWidth;
+    inputZone.classList.add("shake");
+    return;
+  }
+  const {a, b} = evaluate();
+  state.used++;
+  state.history.push({seq, a, b});
+  const isHit = (a === state.y);               // yA0B
+  if(isHit){
+    // 把这次 yA0B 的 A 所在位置并入覆盖集合
+    state.slots.forEach((s,i)=>{ if(s && s.t==="d") state.covered.add(i); });
+  }
+  addRecordRow(seq, a, b, isHit);
+  state.slots.fill(null);
+  renderInput();
+  updateInfoBar();
+  // 胜利：所有 yA0B 的 A 覆盖全部 x 个位置；失败：机会用尽
+  if(state.covered.size >= state.x) endGame(true);
+  else if(state.used >= state.total) endGame(false);
+}
+
+/* ---------- 猜测记录 ---------- */
+function addRecordRow(seq, a, b, isHit){
+  const row = document.createElement("div");
+  row.className = "rec" + (isHit ? " success" : "");
+  let tiles = "";
+  for(const ch of seq){
+    tiles += ch === "-" ? `<span class="rtile mask">-</span>` : `<span class="rtile">${ch}</span>`;
+  }
+  const fb = (a===0 && b===0)
+    ? `<span class="zero">0A0B</span>`
+    : `<span class="a">${a}A</span><span class="b">${b}B</span>`;
+  row.innerHTML =
+    `<span class="rec-idx">#${state.history.length}</span>` +
+    `<span class="rec-seq">${tiles}</span>` +
+    `<span class="rec-fb">${fb}${isHit ? '<span class="hit-mark">✓</span>' : ""}</span>`;
+  recordsEl.querySelectorAll(".rec.latest").forEach(r=>r.classList.remove("latest"));
+  row.classList.add("latest");
+  recordsEl.appendChild(row);
+  layoutRecords();
+}
+
+/* 记录区响应式列数：宽屏最多 6 列，窄屏最少 1 列 */
+function layoutRecords(){
+  if(gameCard.classList.contains("hidden")) return;
+  const w = recordsEl.clientWidth;
+  if(w <= 0) return;
+  const tileW = state.x >= 7 ? 19 : 24;
+  const minCol = state.x * (tileW + 4) + 96;   // 序号 + 反馈 + 内边距的估算
+  const cols = Math.max(1, Math.min(6, Math.floor(w / minCol)));
+  recordsEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+}
+window.addEventListener("resize", layoutRecords);
+new ResizeObserver(layoutRecords).observe(recordsEl);
+
+/* ---------- 胜负 ---------- */
+function endGame(win){
+  state.over = true;
+  const ans = state.answer.map(d=>`<span class="atile">${d}</span>`).join("");
+  banner.className = "banner show " + (win ? "win" : "lose");
+  banner.innerHTML = win
+    ? `<div><h3>🎉 恭喜破解！</h3><p>用了 ${state.used} 次猜中全部 ${state.x} 位数字</p></div><div class="banner-answer">${ans}</div>`
+    : `<div><h3>机会用尽</h3><p>很遗憾，${state.total} 次机会已用完，答案揭晓</p></div><div class="banner-answer">${ans}</div>`;
+  renderInput();
+  banner.scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+
+/* ---------- 提示气泡 ---------- */
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>toast.classList.remove("show"), 1600);
+}
+
+/* ============================================================
+ * 事件绑定
+ * ============================================================ */
+/* 所有按钮点击后立刻失焦，防止后续 Enter/键盘操作误触发已聚焦的按钮 */
+function bindBtn(id, fn){
+  $(id).addEventListener("click", e=>{ fn(); e.currentTarget.blur(); });
+}
+bindBtn("startBtn", startGame);
+bindBtn("restartBtn", startGame);          // 重开本局：相同设置，新答案
+bindBtn("resetBtn", backToSetup);
+bindBtn("navNew", backToSetup);
+bindBtn("navRules", ()=>$("rulesCard").scrollIntoView({behavior:"smooth"}));
+$("backBtn").addEventListener("click", e=>{ backspace(); e.target.blur(); });
+submitBtn.addEventListener("click", ()=>{ submitGuess(); submitBtn.blur(); });
+
+function backToSetup(){
+  gameCard.classList.add("hidden");
+  setupCard.classList.remove("hidden");
+  setupCard.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+/* 键盘操作：0-9 填数字，- 填遮蔽符，Backspace 退格，Enter 提交 */
+document.addEventListener("keydown", e=>{
+  if(gameCard.classList.contains("hidden") || state.over) return;
+  const tag = (e.target.tagName || "").toLowerCase();
+  if(tag === "select" || tag === "input" || tag === "textarea") return;
+  if(/^[0-9]$/.test(e.key)) pressDigit(+e.key);
+  else if(e.key === "-") pressMask();
+  else if(e.key === "Backspace"){ backspace(); e.preventDefault(); }
+  else if(e.key === "Enter"){ submitGuess(); e.preventDefault(); }
+});
+
+/* ============================================================
+ * 初始化
+ * ============================================================ */
+initSelects();
+updateDifficultyUI();
+buildDemoDOM();
+buildDemoPlan();
+demo.playing = true;   // 页面加载后自动播放演示动画
+demoStep();
+</script>
+</body>
+</html>
