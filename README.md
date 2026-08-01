@@ -19,9 +19,3 @@
 ## 本地运行
 
 本项目为纯前端，双击 `猜数字.html` 即可运行，无需安装依赖。
-
-或者：
-
-```bash
-python -m http.server 8000
-# 然后浏览器访问 http://localhost:8000/猜数字.html
