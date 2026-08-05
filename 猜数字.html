@@ -1,0 +1,2234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>猜数字升级版</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+<style>
+/* ============ 设计令牌 ============ */
+:root{
+  --bg:#f4efe4;
+  --card:#fffdf8;
+  --ink:#3a372f;
+  --ink-soft:#6b6557;
+  --line:#e6dfce;
+  --accent:#e8960f;
+  --accent-deep:#b87308;
+  --accent-soft:#fde9c3;
+  --a:#2e7d32;
+  --a-bg:#e3f2e1;
+  --b:#c62828;
+  --b-bg:#fde3e3;
+  --warn:#b87308;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  --sans:"Noto Sans SC",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{
+  font-family:var(--sans);
+  background:var(--bg);
+  background-image:
+    radial-gradient(at 20% 10%,rgba(232,150,15,.08) 0,transparent 50%),
+    radial-gradient(at 80% 90%,rgba(184,115,8,.06) 0,transparent 50%);
+  color:var(--ink);
+  line-height:1.6;
+  overflow-x:hidden;
+}
+
+/* ============ 漂浮粒子 ============ */
+#particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.particle{
+  position:absolute;font-family:var(--mono);font-weight:700;
+  color:rgba(184,115,8,.07);user-select:none;
+  animation:floatUp linear infinite;
+}
+@keyframes floatUp{
+  0%{transform:translateY(20vh) rotate(0);opacity:0}
+  10%{opacity:1}90%{opacity:1}
+  100%{transform:translateY(-120vh) rotate(360deg);opacity:0}
+}
+
+/* ============ 顶栏 ============ */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 28px;
+  background:rgba(255,253,248,.85);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.logo{display:flex;align-items:center;gap:10px;font-family:"ZCOOL KuaiLe",sans-serif;font-size:22px;color:var(--ink)}
+.logo-badge{
+  width:34px;height:34px;border-radius:10px;
+  background:linear-gradient(135deg,#f5b942,#e8960f);
+  color:#fff;display:grid;place-items:center;font-size:18px;
+  box-shadow:0 4px 12px rgba(232,150,15,.35);
+}
+.topnav{display:flex;gap:8px}
+.lang-btn{font-family:var(--mono);font-weight:700;min-width:36px;border:1.5px solid var(--accent) !important;color:var(--accent-deep) !important;background:var(--accent-soft) !important}
+.lang-btn:hover{background:var(--accent) !important;color:#fff !important}
+
+/* ============ 按钮 ============ */
+.btn{
+  font-family:var(--sans);font-size:14px;font-weight:500;
+  border:1.5px solid var(--line);background:#fff;
+  color:var(--ink);padding:8px 18px;border-radius:10px;
+  cursor:pointer;transition:.15s;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent-deep);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn-primary{
+  background:linear-gradient(135deg,#f5b942,#e8960f);
+  color:#fff;border-color:transparent;
+  box-shadow:0 4px 14px rgba(232,150,15,.3);
+}
+.btn-primary:hover{filter:brightness(1.05);color:#fff}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;filter:none}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--ink-soft)}
+.btn-ghost:hover{background:var(--accent-soft);color:var(--accent-deep);border-color:transparent;transform:none}
+.btn-sm{padding:6px 14px;font-size:13px}
+
+/* ============ 主区域 ============ */
+main{position:relative;z-index:1;max-width:920px;margin:0 auto;padding:80px 20px 48px}
+.card{
+  background:var(--card);
+  border:1.5px solid var(--line);
+  border-radius:18px;
+  padding:28px 28px;
+  box-shadow:0 8px 30px rgba(58,55,47,.06);
+  margin-bottom:24px;
+  animation:cardIn .4s ease;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.card.hidden{display:none}
+.card h2{
+  font-family:"ZCOOL KuaiLe",sans-serif;
+  font-size:26px;font-weight:400;
+  margin-bottom:18px;color:var(--ink);
+  display:flex;align-items:center;gap:10px;
+}
+.card h2::before{
+  content:"";width:6px;height:24px;border-radius:3px;
+  background:linear-gradient(180deg,#f5b942,#e8960f);
+}
+
+/* ============ 设置区 ============ */
+.setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:13px;color:var(--ink-soft);font-weight:500}
+.field select,.field input{
+  font-family:var(--sans);font-size:15px;
+  padding:10px 12px;border:1.5px solid var(--line);
+  border-radius:10px;background:#fff;color:var(--ink);
+  cursor:pointer;transition:.15s;
+}
+.field select:focus,.field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+
+/* 进阶设置面板 */
+.advanced-grid{
+  grid-column:1/-1;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:12px;padding:18px;margin-top:8px;
+  background:#fbf9f3;border:1.5px dashed var(--line);border-radius:12px;
+}
+.advanced-title{
+  grid-column:1/-1;font-size:14px;font-weight:700;color:var(--accent-deep);
+  display:flex;align-items:center;gap:6px;margin-bottom:-4px;
+}
+.advanced-item{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:8px 12px;background:#fff;border:1px solid var(--line);border-radius:10px;
+}
+.advanced-item label{font-size:13px;color:var(--ink);font-weight:500;flex:1}
+.advanced-item select{
+  font-family:var(--sans);font-size:13px;padding:6px 10px;
+  border:1.5px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);
+  cursor:pointer;
+}
+.advanced-item select:disabled{opacity:.4;cursor:not-allowed;background:#f3f1ea}
+
+/* 开关 */
+.toggle{
+  width:42px;height:24px;border-radius:99px;background:#d9d2c0;
+  position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;
+}
+.toggle::after{
+  content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;
+  border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.2);
+  transition:transform .2s;
+}
+.toggle.on{background:var(--accent)}
+.toggle.on::after{transform:translateX(18px)}
+.toggle.disabled{opacity:.4;cursor:not-allowed}
+
+/* 难度与机会 */
+.diff-box{
+  grid-column:1/-1;margin-top:8px;padding:18px;
+  background:linear-gradient(135deg,#fffaf0,#fdf6e9);
+  border:1.5px solid var(--line);border-radius:12px;
+}
+.diff-display{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  font-size:16px;margin-bottom:12px;
+}
+.diff-display.bounce{animation:pop .3s}
+@keyframes pop{0%{transform:scale(.9)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
+.stars{color:var(--accent);letter-spacing:1px;font-size:15px}
+.stars .empty{color:#d9d2c0}
+.diff-label{
+  font-family:"ZCOOL KuaiLe",sans-serif;font-size:18px;color:var(--accent-deep);
+  padding:2px 10px;background:var(--accent-soft);border-radius:6px;
+}
+.diff-val{font-family:var(--mono);font-size:14px;color:var(--ink-soft)}
+.not-rec{
+  font-family:"ZCOOL KuaiLe",sans-serif;font-size:16px;color:#c62828;
+  padding:2px 10px;background:var(--b-bg);border-radius:6px;
+}
+.chances-chip{
+  font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent-deep);
+  background:var(--accent-soft);padding:3px 10px;border-radius:99px;
+}
+.chances-row{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding-top:12px;border-top:1px dashed var(--line);
+}
+.chances-row label{font-size:13px;color:var(--ink-soft);font-weight:500}
+.chances-row input{
+  width:64px;font-family:var(--mono);font-size:15px;font-weight:700;
+  text-align:center;padding:6px 8px;border:1.5px solid var(--line);
+  border-radius:8px;background:#fff;color:var(--ink);
+}
+.chances-row input:disabled{opacity:.4;background:#f3f1ea}
+.chances-rec{font-size:12px;color:var(--ink-soft)}
+.diff-note{font-size:12px;color:var(--ink-soft);line-height:1.5;margin-top:8px}
+.start-btn{grid-column:1/-1;margin-top:8px;padding:14px;font-size:16px}
+
+/* ============ 游戏区 ============ */
+.info-bar{
+  display:flex;align-items:center;flex-wrap:wrap;gap:10px;
+  margin-bottom:16px;
+}
+.chip{
+  display:inline-flex;align-items:center;gap:4px;
+  border-radius:99px;white-space:nowrap;
+}
+.info-highlight{
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+}
+.info-meta{
+  display:flex;gap:6px;flex-wrap:wrap;align-items:center;
+  font-size:12px;color:var(--ink-soft);
+}
+.info-highlight .chip{
+  font-size:14px;font-weight:700;color:var(--accent-deep);
+  background:var(--accent-soft);border:1.5px solid var(--accent);
+  padding:6px 14px;
+}
+.info-highlight .chip b{color:var(--accent-deep);font-size:16px}
+.info-highlight .chip.remain{
+  background:linear-gradient(135deg,#f5b942,#e8960f);color:#fff;
+  border-color:transparent;
+}
+.info-highlight .chip.remain b{color:#fff}
+.info-highlight .chip.remain.low{
+  background:linear-gradient(135deg,#e85d5d,#c62828);border-color:transparent;
+}
+.info-highlight .chip.remain.low b{color:#fff}
+.info-meta .chip{
+  font-size:12px;color:var(--ink-soft);
+  background:#f0ece3;border:1px solid var(--line);
+  padding:3px 10px;
+}
+.info-meta .chip b{color:var(--ink-soft);font-family:var(--mono);font-size:12px}
+.info-actions{margin-left:auto;display:flex;gap:6px}
+.progress{height:6px;background:#ede5d4;border-radius:99px;overflow:hidden;margin-bottom:18px}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,#f5b942,#e8960f);border-radius:99px;transition:width .4s ease}
+.progress.unlimited i{width:100%;background:repeating-linear-gradient(45deg,#f5b942,#f5b942 8px,#e8960f 8px,#e8960f 16px);background-size:200% 100%;animation:stripeMove 1.5s linear infinite}
+@keyframes stripeMove{from{background-position:0 0}to{background-position:32px 0}}
+
+/* 记录区 */
+.records{display:grid;gap:8px;margin-bottom:18px}
+.records.tiny .rec{font-size:12px}
+.records.tiny .rtile{width:20px;height:26px;font-size:12px}
+.rec{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 12px;background:#fbf9f3;border:1px solid var(--line);border-radius:10px;
+  animation:recIn .3s ease;
+}
+@keyframes recIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.rec.latest{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.rec.success{background:var(--a-bg);border-color:#b8e0b6}
+.rec-idx{font-family:var(--mono);font-size:12px;color:var(--ink-soft);min-width:24px}
+.rec-seq{display:flex;gap:3px}
+.rtile{
+  width:26px;height:32px;display:grid;place-items:center;
+  font-family:var(--mono);font-size:15px;font-weight:700;
+  background:#fff;border:1.5px solid var(--line);border-radius:6px;color:var(--ink);
+}
+.rtile.mask{color:#b0a892;background:#f3f1ea;border-style:dashed}
+.rec-fb{margin-left:auto;display:flex;align-items:center;gap:6px;font-family:var(--mono);font-weight:700}
+.rec-fb .a{color:var(--a);background:var(--a-bg);padding:2px 8px;border-radius:6px}
+.rec-fb .b{color:var(--b);background:var(--b-bg);padding:2px 8px;border-radius:6px}
+.rec-fb .zero{color:var(--ink-soft);background:#ede5d4;padding:2px 8px;border-radius:6px}
+.rec-fb .pending{
+  color:#a89f8a;font-style:italic;font-weight:500;background:#f3f1ea;padding:2px 10px;border-radius:6px;
+  display:inline-flex;align-items:center;gap:4px;
+}
+.rec-fb .pending::before{content:"⏳";font-style:normal;font-size:13px}
+.rec-fb .sum{color:var(--accent-deep);background:var(--accent-soft);padding:2px 8px;border-radius:6px}
+.hit-mark{color:var(--a);font-size:16px;margin-left:4px}
+
+/* 横幅 */
+.banner{
+  display:none;align-items:center;justify-content:space-between;gap:16px;
+  padding:20px 24px;border-radius:14px;margin-bottom:18px;
+  animation:bannerIn .4s ease;
+}
+@keyframes bannerIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none}}
+.banner.show{display:flex}
+.banner.win{background:linear-gradient(135deg,#e3f2e1,#c8e6c9);border:1.5px solid #81c784}
+.banner.lose{background:linear-gradient(135deg,#fde3e3,#ffcdd2);border:1.5px solid #e57373}
+.banner h3{font-family:"ZCOOL KuaiLe",sans-serif;font-size:22px;margin-bottom:4px}
+.banner.win h3{color:#2e7d32}
+.banner.lose h3{color:#c62828}
+.banner p{font-size:13px;color:var(--ink-soft)}
+.banner-answer{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.atile{
+  width:32px;height:40px;display:grid;place-items:center;
+  font-family:var(--mono);font-size:18px;font-weight:700;
+  background:#fff;border:1.5px solid var(--line);border-radius:8px;
+  animation:tileFlip .3s ease;
+}
+@keyframes tileFlip{from{transform:rotateX(90deg);opacity:0}to{transform:none;opacity:1}}
+
+/* 输入区 */
+.input-zone{padding:18px;background:#fbf9f3;border:1.5px solid var(--line);border-radius:14px}
+.slots{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+.slot{
+  width:48px;height:60px;border:2px solid var(--line);border-radius:10px;
+  background:#fff;display:grid;place-items:center;
+  font-family:var(--mono);font-size:24px;font-weight:700;color:var(--ink);
+  cursor:pointer;transition:.15s;position:relative;
+}
+.slot:hover:not(.locked){border-color:var(--accent)}
+.slot.filled{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-deep)}
+.slot.masked{border-style:dashed;border-color:#c9c0a8;color:#a89f8a;background:#f3f1ea}
+.slot.locked{
+  border-style:solid;border-color:#cfc7b2;background:#ede5d4;cursor:not-allowed;color:#a89f8a;
+}
+.slot.locked::after{
+  content:"🔒";position:absolute;font-size:16px;opacity:.7;
+}
+.keypad{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.key{
+  position:relative;width:46px;height:46px;border-radius:12px;
+  border:1.5px solid var(--line);background:#fff;
+  font-family:var(--mono);font-size:19px;font-weight:700;color:var(--ink);
+  cursor:pointer;transition:transform .15s,border-color .15s,opacity .15s;
+}
+.key:hover:not(:disabled){border-color:var(--accent);transform:translateY(-2px)}
+.key:disabled{opacity:.3;cursor:not-allowed;background:#f3f1ea}
+.key.mask-key{color:#a89f8a}
+.key .badge{
+  position:absolute;top:-8px;right:-9px;
+  background:var(--accent);color:#fff;
+  font-family:var(--sans);font-size:10px;font-weight:700;
+  border-radius:99px;padding:1px 6px;white-space:nowrap;
+}
+.action-row{display:flex;gap:10px;justify-content:center;margin-top:16px}
+.hint-keys{text-align:center;font-size:12px;color:#b6ae9c;margin-top:12px}
+.shake{animation:shakeX .4s}
+@keyframes shakeX{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+
+/* ============ 规则弹窗 ============ */
+.rules-modal{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(58,55,47,.45);backdrop-filter:blur(6px);
+  display:none;align-items:flex-start;justify-content:center;
+  padding:60px 16px 40px;overflow-y:auto;
+}
+.rules-modal.show{display:flex;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.rules-content{
+  background:var(--card);border-radius:18px;
+  max-width:840px;width:100%;padding:32px 36px 36px;
+  position:relative;box-shadow:0 20px 60px rgba(0,0,0,.2);
+  animation:slideUp .3s ease;
+}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
+.rules-close{
+  position:absolute;top:18px;right:22px;width:34px;height:34px;
+  border:none;background:#f0ece3;border-radius:50%;font-size:18px;
+  cursor:pointer;display:grid;place-items:center;transition:.15s;color:var(--ink);
+}
+.rules-close:hover{background:var(--accent-soft);color:var(--accent-deep);transform:rotate(90deg)}
+.rules-content h2{
+  font-family:"ZCOOL KuaiLe",sans-serif;font-size:28px;font-weight:400;
+  margin-bottom:20px;color:var(--ink);
+  display:flex;align-items:center;gap:10px;padding-right:40px;
+}
+.rules-content h2::before{
+  content:"";width:6px;height:26px;border-radius:3px;
+  background:linear-gradient(180deg,#f5b942,#e8960f);
+}
+.rules-section{margin-top:28px;padding-top:20px;border-top:1px dashed var(--line)}
+.rules-section:first-of-type{border-top:none;margin-top:0;padding-top:0}
+.rules-section h3{
+  font-family:"ZCOOL KuaiLe",sans-serif;font-size:20px;font-weight:400;
+  margin-bottom:12px;color:var(--accent-deep);
+  display:flex;align-items:center;gap:8px;
+}
+.rules-section h3 .tag{
+  font-family:var(--sans);font-size:11px;font-weight:700;
+  background:var(--accent-soft);color:var(--accent-deep);
+  padding:2px 8px;border-radius:99px;
+}
+.rule{
+  font-size:14px;line-height:1.85;color:var(--ink);
+  margin-bottom:14px;text-align:justify;
+}
+.rule .seq{
+  font-family:var(--mono);font-weight:700;
+  background:#f5f1e8;padding:1px 6px;border-radius:4px;color:var(--accent-deep);
+  letter-spacing:1px;
+}
+.rule .fa{color:var(--a);font-weight:700}
+.rule .fb{color:var(--b);font-weight:700}
+.rule b{color:var(--ink)}
+
+/* ============ 演示动画通用 ============ */
+.demo{
+  margin-top:16px;padding:18px;
+  background:linear-gradient(135deg,#fffaf0,#fdf6e9);
+  border:1.5px solid var(--line);border-radius:14px;
+  position:relative;
+}
+.demo-label{
+  font-size:12px;color:var(--ink-soft);font-weight:500;margin-bottom:10px;
+}
+.demo-answer{
+  display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;
+}
+.demo-answer .demo-label{margin-bottom:0;min-width:48px}
+.demo-rows{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.dtiles{display:flex;gap:5px;flex-wrap:wrap}
+.dtile{
+  width:34px;height:42px;display:grid;place-items:center;
+  font-family:var(--mono);font-size:18px;font-weight:700;
+  background:#fff;border:1.5px solid var(--line);border-radius:7px;color:var(--ink);
+  opacity:0;transform:translateY(8px) scale(.8);transition:.3s;
+}
+.dtile.show{opacity:1;transform:none}
+.dtile.maskd{color:#a89f8a;background:#f3f1ea;border-style:dashed}
+.dtile.mark-a{border-color:var(--a);background:var(--a-bg);color:var(--a);box-shadow:0 0 0 2px var(--a-bg)}
+.dtile.mark-b{border-color:var(--b);background:var(--b-bg);color:var(--b);box-shadow:0 0 0 2px var(--b-bg)}
+.dtile.confirmed{border-color:var(--a);background:var(--a-bg);color:var(--a)}
+.dtile.locked{
+  border-style:solid;border-color:#cfc7b2;background:#ede5d4;color:#a89f8a;
+  position:relative;opacity:1;transform:none;
+}
+.dtile.locked::after{content:"🔒";position:absolute;font-size:13px;opacity:.7}
+.dtile.pending-tile{color:#a89f8a;background:#f3f1ea;border-style:dashed}
+.dtile.b-only{border-color:var(--b);background:var(--b-bg);color:var(--b)}
+.dtile.hidden-a{opacity:.4}
+.dtile.y-badge{
+  width:auto;height:24px;font-size:12px;padding:0 10px;border-radius:99px;
+  background:var(--accent-soft);color:var(--accent-deep);border:1.5px solid var(--accent);
+  opacity:1;transform:none;
+  display:inline-flex;align-items:center;justify-content:center;
+  flex-shrink:0;white-space:nowrap;
+}
+.drow{
+  display:flex;align-items:center;gap:10px;margin:6px 0;padding:6px 12px;
+  border-radius:8px;transition:.3s;flex-wrap:wrap;
+}
+.drow.current{background:#fff;border:1px solid var(--line)}
+.drow .dtiles{gap:4px}
+.drow .dtile{width:28px;height:34px;font-size:14px}
+.drow .dtile.y-badge{width:auto !important;height:26px;font-size:12px;padding:0 12px;flex-shrink:0}
+.dfb{font-family:var(--mono);font-weight:700;font-size:14px;opacity:0;transition:.3s}
+.dfb.show{opacity:1}
+.dfb .a{color:var(--a);background:var(--a-bg);padding:2px 6px;border-radius:5px}
+.dfb .b{color:var(--b);background:var(--b-bg);padding:2px 6px;border-radius:5px}
+.dfb .zero{color:var(--ink-soft);background:#ede5d4;padding:2px 6px;border-radius:5px}
+.dfb .pending{color:#a89f8a;font-style:italic;background:#f3f1ea;padding:2px 8px;border-radius:5px}
+.dfb .sum{color:var(--accent-deep);background:var(--accent-soft);padding:2px 8px;border-radius:5px}
+.dfb .b-only{color:var(--b);background:var(--b-bg);padding:2px 6px;border-radius:5px}
+.demo-win{
+  text-align:center;font-family:"ZCOOL KuaiLe",sans-serif;font-size:24px;color:var(--a);
+  margin-top:10px;opacity:0;transform:scale(.8);transition:.4s;
+}
+.demo-win.show{opacity:1;transform:none}
+.demo-ctrl{display:flex;justify-content:center;gap:8px;margin-top:12px}
+.mini-btn{
+  font-family:var(--sans);font-size:12px;font-weight:500;
+  border:1.5px solid var(--line);background:#fff;color:var(--ink-soft);
+  padding:5px 14px;border-radius:8px;cursor:pointer;transition:.15s;
+}
+.mini-btn:hover{border-color:var(--accent);color:var(--accent-deep)}
+.demo-note{
+  font-size:12px;color:var(--ink-soft);text-align:center;
+  margin-top:8px;line-height:1.5;
+}
+.demo-note .fa{color:var(--a);font-weight:700}
+.demo-note .fb{color:var(--b);font-weight:700}
+
+/* ============ 提示气泡 ============ */
+.toast{
+  position:fixed;top:74px;left:50%;
+  transform:translate(-50%,-16px);
+  background:#3a372f;color:#fff;
+  padding:10px 22px;border-radius:999px;font-size:14px;
+  opacity:0;pointer-events:none;transition:.25s;z-index:99;
+  box-shadow:0 8px 24px rgba(0,0,0,.18);
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ============ 响应式 ============ */
+@media (max-width:720px){
+  main{padding:76px 12px 48px}
+  .card{padding:20px 16px}
+  .demo{padding:14px 10px}
+  .dtile{width:30px;height:36px;font-size:15px}
+  .drow .dtile{width:26px;height:30px;font-size:12px}
+  .drow{gap:8px;padding:4px 8px}
+  .dfb{font-size:13px}
+  .demo-win span{font-size:20px}
+  .slot{width:40px;height:50px;font-size:20px}
+  .key{width:40px;height:40px;font-size:16px}
+  .atile{width:28px;height:34px;font-size:15px}
+  .banner-answer{margin-left:0;width:100%;justify-content:center}
+  .info-actions{margin-left:0;width:100%;justify-content:flex-end}
+  .setup-grid{grid-template-columns:1fr}
+  .start-btn{width:100%}
+  .rules-content{padding:24px 18px}
+  .rules-content h2{font-size:22px}
+}
+
+/* ============ 英文布局适配 ============ */
+html[lang="en"] .chip{white-space:nowrap}
+html[lang="en"] .info-highlight .chip{font-size:13px;padding:5px 10px}
+html[lang="en"] .info-meta .chip{font-size:11px;padding:2px 8px}
+html[lang="en"] .advanced-grid{grid-template-columns:1fr}
+html[lang="en"] .rule{font-size:14px;line-height:1.7}
+html[lang="en"] .demo-label{font-size:12px}
+html[lang="en"] .btn{font-size:13px;padding:7px 14px}
+html[lang="en"] .lang-btn{min-width:40px}
+</style>
+</head>
+<body>
+<div id="particles"></div>
+
+<!-- ============ 顶栏 ============ -->
+<header class="topbar">
+  <div class="logo"><span class="logo-badge">猜</span><span data-i18n="app.title">猜数字升级版</span></div>
+  <nav class="topnav">
+    <button class="btn btn-ghost btn-sm" id="navRules" data-i18n="nav.rules">规则</button>
+    <button class="btn btn-ghost btn-sm" id="navNew" data-i18n="nav.new">新对局</button>
+    <button class="btn btn-ghost btn-sm lang-btn" id="navLang" title="Switch Language">EN</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ============ 设置卡片 ============ -->
+  <section class="card" id="setupCard">
+    <h2 data-i18n="setup.title">难度设置</h2>
+    <div class="setup-grid">
+      <div class="field">
+        <label for="selX" data-i18n="setup.answerDigits">答案位数</label>
+        <select id="selX"></select>
+      </div>
+      <div class="field">
+        <label for="selY" data-i18n="setup.guessDigits">每次猜测位数</label>
+        <select id="selY"></select>
+      </div>
+
+      <div class="advanced-grid">
+        <div class="advanced-title" data-i18n="setup.advancedTitle">进阶设置（可任意组合，全部可选）</div>
+        <div class="advanced-item">
+          <label for="toggleDynY" data-i18n="setup.dynamicY">动态位数</label>
+          <div class="toggle" id="toggleDynY" role="switch" aria-checked="false" tabindex="0"></div>
+        </div>
+        <div class="advanced-item">
+          <label for="selDelay" data-i18n="setup.delay">反馈延迟</label>
+          <select id="selDelay">
+            <option value="off" data-i18n="opt.off">关闭</option>
+            <option value="mild" data-i18n="opt.mild">温和</option>
+            <option value="hardcore" data-i18n="opt.hardcore">硬核</option>
+          </select>
+        </div>
+        <div class="advanced-item">
+          <label for="toggleBOnly" data-i18n="setup.bOnly">仅显示 B</label>
+          <div class="toggle" id="toggleBOnly" role="switch" aria-checked="false" tabindex="0"></div>
+        </div>
+        <div class="advanced-item">
+          <label for="selLock" data-i18n="setup.lock">位置锁定</label>
+          <select id="selLock">
+            <option value="0" data-i18n="opt.lockOff">关闭</option>
+            <option value="1" data-i18n="opt.lock1">锁定 1 个</option>
+            <option value="2" data-i18n="opt.lock2">锁定 2 个</option>
+          </select>
+        </div>
+        <div class="advanced-item">
+          <label for="toggleUnlimited" data-i18n="setup.chanceLimit">开启次数限制</label>
+          <div class="toggle on" id="toggleUnlimited" role="switch" aria-checked="true" tabindex="0"></div>
+        </div>
+      </div>
+
+      <div class="diff-box">
+        <div class="diff-display" id="diffDisplay"></div>
+        <div class="chances-row">
+          <label data-i18n="setup.chances">机会次数</label>
+          <input type="number" id="chancesInput" min="1" max="999999" step="1" value="10">
+          <span class="chances-rec" id="chancesRec">推荐 10 次</span>
+        </div>
+        <div class="diff-note" id="diffNote">机会次数根据答案位数、猜测位数及各项进阶设置综合评估。开启的进阶选项越多，推荐次数相应增加。</div>
+      </div>
+
+      <button class="btn btn-primary start-btn" id="startBtn" data-i18n="setup.start">开始游戏</button>
+    </div>
+  </section>
+
+  <!-- ============ 游戏卡片 ============ -->
+  <section class="card hidden" id="gameCard">
+    <div class="info-bar">
+      <div class="info-highlight" id="infoHighlight"></div>
+      <div class="info-meta" id="infoMeta"></div>
+      <div class="info-actions">
+        <button class="btn btn-ghost btn-sm" id="restartBtn" data-i18n="game.restart">换题重开</button>
+        <button class="btn btn-ghost btn-sm" id="resetBtn" data-i18n="game.reset">重新设置</button>
+      </div>
+    </div>
+    <div class="progress"><i id="progFill"></i></div>
+    <div class="records" id="records"></div>
+    <div class="banner" id="banner"></div>
+    <div class="input-zone" id="inputZone">
+      <div class="slots" id="slots"></div>
+      <div class="keypad" id="keypad"></div>
+      <div class="action-row">
+        <button class="btn btn-ghost" id="backBtn" data-i18n="game.back">退格</button>
+        <button class="btn btn-primary" id="submitBtn" data-i18n="game.submit">提交猜测</button>
+      </div>
+      <div class="hint-keys" data-i18n="game.hint">键盘操作：0–9 填数字 · - 填遮蔽符 · Backspace 退格 · Enter 提交</div>
+    </div>
+  </section>
+</main>
+
+<!-- ============ 规则弹窗 ============ -->
+<div class="rules-modal" id="rulesModal">
+  <div class="rules-content">
+    <button class="rules-close" id="rulesClose" aria-label="Close">×</button>
+    <h2 data-i18n="rules.title">游戏规则</h2>
+
+    <div class="rules-section">
+      <h3><span data-i18n="rules.basic">基础规则</span> <span class="tag" data-i18n="rules.basicTag">必读</span></h3>
+      <p class="rule" data-i18n-html="rules.basic1">系统会随机生成一个 <b>x</b> 位的数字，每一位都互不相同（取自 0–9，首位允许为 0）。你每次提交一个 x 位的猜测序列，但只能填写其中 <b>y</b> 个位置，其余位置用遮蔽符 <span class="seq">-</span> 占位——遮蔽符表示"这个位置我这次不猜"，完全不参与比较。同一次猜测中每个数字最多使用一次，遮蔽符恰好使用 x−y 次；当 x=y 时没有遮蔽符，每次猜满整串数字。</p>
+      <p class="rule" data-i18n-html="rules.basic2">提交后，系统只针对你填了数字的 y 个位置给出"<span class="fa">几A</span><span class="fb">几B</span>"的反馈：<span class="fa">A</span> 表示数字对、位置也对，<span class="fb">B</span> 表示数字确实在答案中、但不在你猜的位置上，遮蔽符所在的位置一概忽略。举个例子：假设答案是 <span class="seq">38157</span>，你猜 <span class="seq">365--</span>，则第 1 位的 3 得到一个 A，第 3 位的 5 得到一个 B，反馈为 <span class="fa">1A</span><span class="fb">1B</span>——由此可知第 1 位确定是 3，而 5 在答案中但不在第 3 位。下方的动画演示了这组例子的完整推理过程。</p>
+      <p class="rule" data-i18n-html="rules.basic3">当你猜出的所有 yA0B 中的 A 合起来覆盖了答案的全部 <b>x</b> 个位置，游戏获胜（对 x=y 来说就是一次完全命中）。比如 x=10、y=5、答案是 <span class="seq">0123456789</span> 时，只要猜出 <span class="seq">01234-----</span> 和 <span class="seq">-----56789</span> 两个 5A0B，10 个位置就全被 A 覆盖，即告获胜；机会用尽仍未覆盖全部位置则失败并公布答案。</p>
+      <div class="demo" id="demoBasic">
+        <div class="demo-label" data-i18n="demo.basic.label">演示：基础 A/B 反馈与覆盖获胜（答案 38157，x=5，y=3）</div>
+        <div class="demo-answer">
+          <span class="demo-label" data-i18n="demo.answer">答案</span>
+          <div class="dtiles" id="demoBasicAnswer"></div>
+        </div>
+        <div class="demo-rows" id="demoBasicRows"></div>
+        <div class="demo-win" id="demoBasicWin"><span data-i18n="demo.basic.win">胜利！5 个位置全部覆盖</span></div>
+        <div class="demo-ctrl">
+          <button class="mini-btn" id="demoBasicReplay" data-i18n="demo.replay">↺ 重播</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="rules-section">
+      <h3><span data-i18n="rules.dynamicY">动态位数</span> <span class="tag" data-i18n="rules.dynamicYTag">进阶</span></h3>
+      <p class="rule" data-i18n-html="rules.dynamicYText">开启后，每轮实际可填的数字位数不再固定为基础值 y，而是在 <b>y−1、y、y+1</b> 三档之间随机波动（下限不低于 1，上限不超过答案位数 x）。系统在每轮提交后立即公布下一轮的可填位数，玩家需据此灵活分配数字与遮蔽符。若基础 y=1，则每轮恒为 1 不再波动；若 y=x，则每轮只能是 x 或 x−1。这一机制让每轮的信息量都不确定，既考验临场应变，也避免固定节奏下的套路化推理。</p>
+      <div class="demo" id="demoDynY">
+        <div class="demo-label" data-i18n="demo.dyn.label">演示：每轮可填位数随机变化（答案 38157，基础 y=3）</div>
+        <div class="demo-answer">
+          <span class="demo-label" data-i18n="demo.answer">答案</span>
+          <div class="dtiles" id="demoDynAnswer"></div>
+        </div>
+        <div class="demo-rows" id="demoDynRows"></div>
+        <div class="demo-win" id="demoDynWin"><span data-i18n="demo.dyn.win">胜利！动态应变成功</span></div>
+        <div class="demo-ctrl">
+          <button class="mini-btn" id="demoDynReplay" data-i18n="demo.replay">↺ 重播</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="rules-section">
+      <h3><span data-i18n="rules.delay">延迟反馈</span> <span class="tag" data-i18n="rules.delayTag">进阶</span></h3>
+      <p class="rule" data-i18n-html="rules.delayText">开启后，反馈不再即时显示，而是延迟一轮揭晓。第 n 次猜测提交后只记录内容，第 n+1 次提交时才揭晓第 n 次的 A/B 结果。提供两档强度：<b>温和档</b>下，第一轮只显示 A+B 的命中总数（不拆分），从第二轮起恢复正常延迟，至少有方向感；<b>硬核档</b>下，第一轮纯盲猜，第二轮才看到第一轮的完整 A/B，记忆与策略叠加，难度极高。若某轮提交已满足胜利条件，立即结算并显示胜利，无需等待下一轮揭晓。记录区中，未揭晓的轮次显示为"待揭晓"占位，避免混淆轮次顺序。若与仅显示 B 同时开启，温和档第一轮改为只显示 B 的数值（不显示 A+B 总数，否则已知 B 即可推算 A，破坏仅 B 模式的难度）。</p>
+      <div class="demo" id="demoDelay">
+        <div class="demo-label" data-i18n="demo.delay.label">演示：硬核延迟——第 1 轮盲猜，第 2 轮才揭晓（答案 38157）</div>
+        <div class="demo-answer">
+          <span class="demo-label" data-i18n="demo.answer">答案</span>
+          <div class="dtiles" id="demoDelayAnswer"></div>
+        </div>
+        <div class="demo-rows" id="demoDelayRows"></div>
+        <div class="demo-win" id="demoDelayWin"><span data-i18n="demo.delay.win">胜利！延迟揭晓完成</span></div>
+        <div class="demo-ctrl">
+          <button class="mini-btn" id="demoDelayReplay" data-i18n="demo.replay">↺ 重播</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="rules-section">
+      <h3><span data-i18n="rules.bOnly">仅显示 B</span> <span class="tag" data-i18n="rules.bOnlyTag">进阶</span></h3>
+      <p class="rule" data-i18n-html="rules.bOnlyText">开启后，界面只反馈 B 的数值，A 在后台计算但不显示。例如答案是 <span class="seq">38157</span>，你猜 <span class="seq">36512</span>，后台算出 1A1B，但界面只显示 <span class="fb">1B</span>——你知道本次有 1 个数字属于答案但位置不对，却完全不知道剩下的数字中是否有位置正确的。当反馈为 <span class="fb">0B</span> 时情况最棘手：可能意味着所填数字全不在答案中（0A0B），也可能意味着所填数字全部正确且位置全对（yA0B），必须通过后续变体猜测来排除。获胜规则与其他模式完全一致：系统在后台追踪每次 yA0B 命中覆盖的位置，当全部 x 个位置被覆盖时即告胜利（x=y 时一次 yA0B 即可全覆盖）。区别仅在于——你看不到 A，也就看不到覆盖进度，必须纯靠 B 的线索推理出哪些位置已被锁定。此模式可与位置锁定、动态位数、延迟反馈等自由组合；若与温和延迟同时开启，温和档第一轮改为只显示 B（不显示 A+B 总数，以免推算出 A）。为平衡难度，机会次数会自动增加约 50%。</p>
+      <div class="demo" id="demoBOnly">
+        <div class="demo-label" data-i18n="demo.bOnly.label">演示：只看 B，0B 的两种可能（答案 38157，x=y=5）</div>
+        <div class="demo-answer">
+          <span class="demo-label" data-i18n="demo.answer">答案</span>
+          <div class="dtiles" id="demoBOnlyAnswer"></div>
+        </div>
+        <div class="demo-rows" id="demoBOnlyRows"></div>
+        <div class="demo-win" id="demoBOnlyWin"><span data-i18n="demo.bOnly.win">胜利！0B 实为 5A0B，全中！</span></div>
+        <div class="demo-ctrl">
+          <button class="mini-btn" id="demoBOnlyReplay" data-i18n="demo.replay">↺ 重播</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="rules-section">
+      <h3><span data-i18n="rules.lock">位置锁定</span> <span class="tag" data-i18n="rules.lockTag">进阶</span></h3>
+      <p class="rule" data-i18n-html="rules.lockText">开启后，系统每轮随机冻结 1 或 2 个位置，这些位置本轮必须用遮蔽符覆盖，玩家无法填入数字。冻结位置在输入区用锁图标标记，玩家仍可决定其余位置填什么数字，只是把部分遮蔽符的分配权交给了系统。锁定数上限为 x−y，确保冻结后仍有足够空位填满数字；若 x=y（无遮蔽符模式），锁定自动失效。每轮冻结位置重新随机抽取，上轮冻结的位置本轮可能解锁，增加变数。当与动态位数同时开启时，系统先摇出本轮可填位数，再据此自适应调整锁定数（取预设值与剩余空位的较小值），永不让玩家无数字可填。</p>
+      <div class="demo" id="demoLock">
+        <div class="demo-label" data-i18n="demo.lock.label">演示：每轮锁定 2 个位置，仍可覆盖获胜（答案 38157，x=5，y=3）</div>
+        <div class="demo-answer">
+          <span class="demo-label" data-i18n="demo.answer">答案</span>
+          <div class="dtiles" id="demoLockAnswer"></div>
+        </div>
+        <div class="demo-rows" id="demoLockRows"></div>
+        <div class="demo-win" id="demoLockWin"><span data-i18n="demo.lock.win">胜利！两轮锁定仍全覆盖</span></div>
+        <div class="demo-ctrl">
+          <button class="mini-btn" id="demoLockReplay" data-i18n="demo.replay">↺ 重播</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="rules-section">
+      <h3><span data-i18n="rules.chances">机会次数</span> <span class="tag" data-i18n="rules.chancesTag">说明</span></h3>
+      <p class="rule" data-i18n-html="rules.chancesText">机会次数根据答案位数、每次猜测位数及各项进阶设置综合评估得出，开启的进阶选项越多、难度越大，推荐次数也相应增加。进阶设置中的"开启次数限制"开关默认打开（有限次数，更紧张刺激）；关闭该开关则进入纯推理模式，可无限猜测直至破解，专注于推理本身。你也可以手动调整次数框中的数值，在推荐基础上增减。次数耗尽且未获胜则失败并公布答案。</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+
+/* ============================================================
+ * 国际化（i18n）
+ * ============================================================ */
+let currentLang = "zh";
+const DIFF_LABEL_ZH = ["不推荐","入门","简单","普通","困难","大师","宗师","地狱"];
+const DIFF_LABEL_EN = ["N/A","Easy","Simple","Normal","Hard","Expert","Master","Hell"];
+
+const I18N = {
+zh: {
+  "app.title":"猜数字升级版",
+  "nav.rules":"规则","nav.new":"新对局","nav.lang":"EN",
+  "setup.title":"难度设置","setup.answerDigits":"答案位数","setup.guessDigits":"每次猜测位数","setup.digitUnit":"位",
+  "setup.advancedTitle":"进阶设置（可任意组合，全部可选）",
+  "setup.dynamicY":"动态位数","setup.delay":"反馈延迟","setup.bOnly":"仅显示 B",
+  "setup.lock":"位置锁定","setup.chanceLimit":"开启次数限制","setup.chances":"机会次数",
+  "setup.start":"开始游戏",
+  "setup.rec":"推荐 {n} 次","setup.recCustom":"已自定义（推荐 {n}）","setup.unlimited":"已关闭次数限制",
+  "setup.diffNote":"机会次数根据答案位数、猜测位数及各项进阶设置综合评估。开启的进阶选项越多，推荐次数越高。",
+  "opt.off":"关闭","opt.mild":"温和","opt.hardcore":"硬核","opt.lockOff":"关闭","opt.lock1":"锁定 1 个","opt.lock2":"锁定 2 个",
+  "diff.0":"不推荐","diff.1":"入门","diff.2":"简单","diff.3":"普通","diff.4":"困难","diff.5":"大师","diff.6":"宗师","diff.7":"地狱",
+  "game.restart":"换题重开","game.reset":"重新设置","game.back":"退格","game.submit":"提交猜测","game.maskRemaining":"剩 {n}",
+  "game.hint":"键盘操作：0–9 填数字 · - 填遮蔽符 · Backspace 退格 · Enter 提交",
+  "info.answer":"答案 {x} 位","info.base":"基础 {y} 位","info.canFill":"本轮可填 {n} 位","info.locked":"本轮锁定 {n} 位",
+  "info.mildDelay":"温和延迟","info.hardcoreDelay":"硬核延迟","info.bOnly":"仅显示 B",
+  "info.remaining":"剩余 {left} / {total}","info.usedUnlimited":"已用 {n} · 无限制","info.difficulty":"难度",
+  "toast.fillRequired":"请填满本轮要求的位数","toast.alreadyGuessed":"这个组合已经猜过了",
+  "toast.lockAdjusted":"位置锁定数已自动调整为 {n}（上限为 位数差 {max}）",
+  "toast.newGame":"新对局开始，答案 {x} 位","toast.newAnswer":"已换题，答案重新生成",
+  "banner.winTitle":"恭喜，破解成功！","banner.winDesc":"用了 {used} / {total} 次机会。",
+  "banner.winDescUnlimited":"用了 {used} 次猜测，无次数限制模式。",
+  "banner.loseTitle":"机会用尽，挑战失败","banner.loseDesc":"正确答案如下，再接再厉。",
+  "fb.pending":"待揭晓","fb.hit":"命中 {n}",
+  "demo.replay":"↺ 重播","demo.answer":"答案","demo.round":"本轮 {n} 位","demo.pending":"待揭晓",
+  "demo.basic.label":"演示：基础 A/B 反馈与覆盖获胜（答案 38157，x=5，y=3）","demo.basic.win":"胜利！5 个位置全部覆盖",
+  "demo.dyn.label":"演示：每轮可填位数随机变化（答案 38157，基础 y=3）","demo.dyn.win":"胜利！动态应变成功",
+  "demo.delay.label":"演示：硬核延迟——第 1 轮盲猜，第 2 轮才揭晓（答案 38157）","demo.delay.win":"胜利！延迟揭晓完成",
+  "demo.bOnly.label":"演示：只看 B，0B 的两种可能（答案 38157，x=y=5）","demo.bOnly.win":"胜利！0B 实为 5A0B，全中！",
+  "demo.bOnlyNote":"0B 的两种可能：{a}（全中）或 {b}（全错）",
+  "demo.lock.label":"演示：每轮锁定 2 个位置，仍可覆盖获胜（答案 38157，x=5，y=3）","demo.lock.win":"胜利！两轮锁定仍全覆盖",
+  "diffpart.base":"基础难度 {v}","diffpart.dynamicY":"动态位数 +0.2","diffpart.mild":"温和延迟 +0.3",
+  "diffpart.hardcore":"硬核延迟 +0.6","diffpart.bOnly":"仅显示 B +0.5","diffpart.lock":"位置锁定 ×{n} +{v}",
+  "diffpart.notRec":"位数差过大",
+  "diffnote":"难度构成：{parts}。开启进阶选项越多，推荐次数越高。",
+  "rules.title":"游戏规则",
+  "rules.basic":"基础规则","rules.basicTag":"必读",
+  "rules.dynamicY":"动态位数","rules.dynamicYTag":"进阶",
+  "rules.delay":"延迟反馈","rules.delayTag":"进阶",
+  "rules.bOnly":"仅显示 B","rules.bOnlyTag":"进阶",
+  "rules.lock":"位置锁定","rules.lockTag":"进阶",
+  "rules.chances":"机会次数","rules.chancesTag":"说明",
+  "rules.basic1":'系统会随机生成一个 <b>x</b> 位的数字，每一位都互不相同（取自 0–9，首位允许为 0）。你每次提交一个 x 位的猜测序列，但只能填写其中 <b>y</b> 个位置，其余位置用遮蔽符 <span class="seq">-</span> 占位——遮蔽符表示"这个位置我这次不猜"，完全不参与比较。同一次猜测中每个数字最多使用一次，遮蔽符恰好使用 x−y 次；当 x=y 时没有遮蔽符，每次猜满整串数字。',
+  "rules.basic2":'提交后，系统只针对你填了数字的 y 个位置给出"<span class="fa">几A</span><span class="fb">几B</span>"的反馈：<span class="fa">A</span> 表示数字对、位置也对，<span class="fb">B</span> 表示数字确实在答案中、但不在你猜的位置上，遮蔽符所在的位置一概忽略。举个例子：假设答案是 <span class="seq">38157</span>，你猜 <span class="seq">365--</span>，则第 1 位的 3 得到一个 A，第 3 位的 5 得到一个 B，反馈为 <span class="fa">1A</span><span class="fb">1B</span>——由此可知第 1 位确定是 3，而 5 在答案中但不在第 3 位。下方的动画演示了这组例子的完整推理过程。',
+  "rules.basic3":'当你猜出的所有 yA0B 中的 A 合起来覆盖了答案的全部 <b>x</b> 个位置，游戏获胜（对 x=y 来说就是一次完全命中）。比如 x=10、y=5、答案是 <span class="seq">0123456789</span> 时，只要猜出 <span class="seq">01234-----</span> 和 <span class="seq">-----56789</span> 两个 5A0B，10 个位置就全被 A 覆盖，即告获胜；机会用尽仍未覆盖全部位置则失败并公布答案。',
+  "rules.dynamicYText":'开启后，每轮实际可填的数字位数不再固定为基础值 y，而是在 <b>y−1、y、y+1</b> 三档之间随机波动（下限不低于 1，上限不超过答案位数 x）。系统在每轮提交后立即公布下一轮的可填位数，玩家需据此灵活分配数字与遮蔽符。若基础 y=1，则每轮恒为 1 不再波动；若 y=x，则每轮只能是 x 或 x−1。这一机制让每轮的信息量都不确定，既考验临场应变，也避免固定节奏下的套路化推理。',
+  "rules.delayText":'开启后，反馈不再即时显示，而是延迟一轮揭晓。第 n 次猜测提交后只记录内容，第 n+1 次提交时才揭晓第 n 次的 A/B 结果。提供两档强度：<b>温和档</b>下，第一轮只显示 A+B 的命中总数（不拆分），从第二轮起恢复正常延迟，至少有方向感；<b>硬核档</b>下，第一轮纯盲猜，第二轮才看到第一轮的完整 A/B，记忆与策略叠加，难度极高。若某轮提交已满足胜利条件，立即结算并显示胜利，无需等待下一轮揭晓。记录区中，未揭晓的轮次显示为"待揭晓"占位，避免混淆轮次顺序。若与仅显示 B 同时开启，温和档第一轮改为只显示 B 的数值（不显示 A+B 总数，否则已知 B 即可推算 A，破坏仅 B 模式的难度）。',
+  "rules.bOnlyText":'开启后，界面只反馈 B 的数值，A 在后台计算但不显示。例如答案是 <span class="seq">38157</span>，你猜 <span class="seq">36512</span>，后台算出 1A1B，但界面只显示 <span class="fb">1B</span>——你知道本次有 1 个数字属于答案但位置不对，却完全不知道剩下的数字中是否有位置正确的。当反馈为 <span class="fb">0B</span> 时情况最棘手：可能意味着所填数字全不在答案中（0A0B），也可能意味着所填数字全部正确且位置全对（yA0B），必须通过后续变体猜测来排除。获胜规则与其他模式完全一致：系统在后台追踪每次 yA0B 命中覆盖的位置，当全部 x 个位置被覆盖时即告胜利（x=y 时一次 yA0B 即可全覆盖）。区别仅在于——你看不到 A，也就看不到覆盖进度，必须纯靠 B 的线索推理出哪些位置已被锁定。此模式可与位置锁定、动态位数、延迟反馈等自由组合；若与温和延迟同时开启，温和档第一轮改为只显示 B（不显示 A+B 总数，以免推算出 A）。为平衡难度，机会次数会自动增加约 50%。',
+  "rules.lockText":'开启后，系统每轮随机冻结 1 或 2 个位置，这些位置本轮必须用遮蔽符覆盖，玩家无法填入数字。冻结位置在输入区用锁图标标记，玩家仍可决定其余位置填什么数字，只是把部分遮蔽符的分配权交给了系统。锁定数上限为 x−y，确保冻结后仍有足够空位填满数字；若 x=y（无遮蔽符模式），锁定自动失效。每轮冻结位置重新随机抽取，上轮冻结的位置本轮可能解锁，增加变数。当与动态位数同时开启时，系统先摇出本轮可填位数，再据此自适应调整锁定数（取预设值与剩余空位的较小值），永不让玩家无数字可填。',
+  "rules.chancesText":'机会次数根据答案位数、每次猜测位数及各项进阶设置综合评估得出，开启的进阶选项越多、难度越大，推荐次数也相应增加。进阶设置中的"开启次数限制"开关默认打开（有限次数，更紧张刺激）；关闭该开关则进入纯推理模式，可无限猜测直至破解，专注于推理本身。你也可以手动调整次数框中的数值，在推荐基础上增减。次数耗尽且未获胜则失败并公布答案。',
+},
+en: {
+  "app.title":"Number Guess",
+  "nav.rules":"Rules","nav.new":"New Game","nav.lang":"中",
+  "setup.title":"Difficulty Setup","setup.answerDigits":"Answer Digits","setup.guessDigits":"Guess Digits","setup.digitUnit":"digits",
+  "setup.advancedTitle":"Advanced (optional, freely combinable)",
+  "setup.dynamicY":"Dynamic Digits","setup.delay":"Feedback Delay","setup.bOnly":"B-Only",
+  "setup.lock":"Position Lock","setup.chanceLimit":"Chance Limit","setup.chances":"Chances",
+  "setup.start":"Start Game",
+  "setup.rec":"Rec: {n}","setup.recCustom":"Custom (rec: {n})","setup.unlimited":"No limit",
+  "setup.diffNote":"Chances are evaluated from answer digits, guess digits, and advanced settings. More advanced options = higher recommended chances.",
+  "opt.off":"Off","opt.mild":"Mild","opt.hardcore":"Hardcore","opt.lockOff":"Off","opt.lock1":"Lock 1","opt.lock2":"Lock 2",
+  "diff.0":"N/A","diff.1":"Easy","diff.2":"Simple","diff.3":"Normal","diff.4":"Hard","diff.5":"Expert","diff.6":"Master","diff.7":"Hell",
+  "game.restart":"Restart","game.reset":"Resetup","game.back":"Back","game.submit":"Submit","game.maskRemaining":"Left {n}",
+  "game.hint":"Keys: 0–9 digits · - mask · Backspace · Enter",
+  "info.answer":"Answer {x}d","info.base":"Base {y}d","info.canFill":"Fill {n} this round","info.locked":"Locked {n} this round",
+  "info.mildDelay":"Mild Delay","info.hardcoreDelay":"Hardcore Delay","info.bOnly":"B-Only",
+  "info.remaining":"Left {left}/{total}","info.usedUnlimited":"Used {n} · No limit","info.difficulty":"Level",
+  "toast.fillRequired":"Fill all required digits for this round","toast.alreadyGuessed":"Already guessed this combination",
+  "toast.lockAdjusted":"Lock count auto-adjusted to {n} (max = digit gap {max})",
+  "toast.newGame":"New game started, answer has {x} digits","toast.newAnswer":"New answer generated",
+  "banner.winTitle":"Solved!","banner.winDesc":"Used {used} / {total} chances.",
+  "banner.winDescUnlimited":"Used {used} guesses, no limit mode.",
+  "banner.loseTitle":"Out of chances","banner.loseDesc":"The answer is below. Try again!",
+  "fb.pending":"Pending","fb.hit":"Hit {n}",
+  "demo.replay":"↺ Replay","demo.answer":"Answer","demo.round":"Round {n} digits","demo.pending":"Pending",
+  "demo.basic.label":"Demo: Basic A/B feedback & coverage win (answer 38157, x=5, y=3)","demo.basic.win":"Win! All 5 positions covered",
+  "demo.dyn.label":"Demo: Fill count varies each round (answer 38157, base y=3)","demo.dyn.win":"Win! Adapted successfully",
+  "demo.delay.label":"Demo: Hardcore delay — round 1 blind, round 2 reveals (answer 38157)","demo.delay.win":"Win! Delayed reveal complete",
+  "demo.bOnly.label":"Demo: B-only, 0B ambiguity (answer 38157, x=y=5)","demo.bOnly.win":"Win! 0B was actually 5A0B!",
+  "demo.bOnlyNote":"0B means either: {a} (all correct) or {b} (all wrong)",
+  "demo.lock.label":"Demo: 2 positions locked per round, still winnable (answer 38157, x=5, y=3)","demo.lock.win":"Win! Full coverage despite locks",
+  "diffpart.base":"Base {v}","diffpart.dynamicY":"Dynamic +0.2","diffpart.mild":"Mild +0.3",
+  "diffpart.hardcore":"Hardcore +0.6","diffpart.bOnly":"B-Only +0.5","diffpart.lock":"Lock ×{n} +{v}",
+  "diffpart.notRec":"Digit gap too large",
+  "diffnote":"Difficulty: {parts}. More advanced options = more recommended chances.",
+  "rules.title":"How to Play",
+  "rules.basic":"Basic Rules","rules.basicTag":"Must Read",
+  "rules.dynamicY":"Dynamic Digits","rules.dynamicYTag":"Advanced",
+  "rules.delay":"Delayed Feedback","rules.delayTag":"Advanced",
+  "rules.bOnly":"B-Only","rules.bOnlyTag":"Advanced",
+  "rules.lock":"Position Lock","rules.lockTag":"Advanced",
+  "rules.chances":"Chances","rules.chancesTag":"Info",
+  "rules.basic1":'The system generates a random <b>x</b>-digit number, each digit unique (0–9, leading zero allowed). Each turn you submit an x-digit sequence, but only fill <b>y</b> positions — the rest are masked with <span class="seq">-</span>. Masks mean "not guessing this position this turn" and are excluded from comparison. Each digit is used at most once per guess; masks are used exactly x−y times. When x=y, there are no masks and you guess the full string each turn.',
+  "rules.basic2":'After submitting, the system gives feedback only on the y positions you filled, as "<span class="fa">xA</span><span class="fb">yB</span>": <span class="fa">A</span> = right digit, right position; <span class="fb">B</span> = digit is in the answer but different position; masked positions are ignored. Example: answer <span class="seq">38157</span>, guess <span class="seq">365--</span>: position 1\'s 3 gives an A, position 3\'s 5 gives a B, feedback is <span class="fa">1A</span><span class="fb">1B</span> — so position 1 is definitely 3, and 5 is in the answer but not at position 3. The animation below shows the full reasoning.',
+  "rules.basic3":'You win when the A\'s from all your yA0B guesses collectively cover all <b>x</b> positions of the answer (for x=y, one perfect hit). E.g., x=10, y=5, answer <span class="seq">0123456789</span>: guess <span class="seq">01234-----</span> and <span class="seq">-----56789</span> (both 5A0B), and all 10 positions are covered by A\'s — you win. Running out of chances without full coverage = lose, and the answer is revealed.',
+  "rules.dynamicYText":'When enabled, the number of digits you can fill each round is no longer fixed at y, but randomly varies among <b>y−1, y, y+1</b> (min 1, max x). After each submit, the system immediately announces the next round\'s fill count, so you must adapt your digit and mask allocation. If y=1, it stays 1 every round; if y=x, it\'s either x or x−1. This makes each round\'s information uncertain, testing adaptability and preventing formulaic reasoning.',
+  "rules.delayText":'When enabled, feedback is delayed by one round. Round n\'s submit only records the guess; round n+1 reveals round n\'s A/B. Two levels: <b>Mild</b> shows only the A+B hit total in round 1 (not split), then normal delay from round 2 — at least giving direction; <b>Hardcore</b> is pure blind in round 1, with round 2 revealing round 1\'s full A/B — memory and strategy combined, extremely hard. If a submit meets the win condition, the game ends immediately without waiting for the next reveal. Unrevealed rounds show as "Pending" placeholders. If combined with B-Only, Mild\'s first round shows only B (not A+B total, since knowing B lets you compute A, breaking B-Only\'s difficulty).',
+  "rules.bOnlyText":'When enabled, the interface only shows B; A is computed internally but not displayed. E.g., answer <span class="seq">38157</span>, guess <span class="seq">36512</span>: internally 1A1B, but only <span class="fb">1B</span> shown — you know one digit is in the answer but wrong position, but don\'t know if any are in the right position. When feedback is <span class="fb">0B</span>, it\'s most tricky: could mean all digits are wrong (0A0B), or all are correct and in right positions (yA0B) — you must rule out via subsequent guesses. The win rule is identical to other modes: the system internally tracks positions covered by yA0B hits, and you win when all x positions are covered (for x=y, one yA0B covers all). The difference: you can\'t see A, so you can\'t see coverage progress; you must deduce which positions are locked purely from B clues. This mode freely combines with Position Lock, Dynamic Digits, and Delayed Feedback; if combined with Mild delay, Mild\'s first round shows only B (not A+B total, to prevent computing A). To balance difficulty, chances increase by ~50%.',
+  "rules.lockText":'When enabled, the system randomly freezes 1 or 2 positions each round — these must be masked and cannot be filled. Frozen positions show a lock icon; you still decide what to fill in the remaining positions, but some mask allocation is delegated to the system. The lock count is capped at x−y, ensuring enough space for digits after freezing; if x=y (no masks), locking is automatically disabled. Frozen positions are re-randomized each round — last round\'s frozen may unlock this round, adding variability. When combined with Dynamic Digits, the system first rolls the round\'s fill count, then adaptively adjusts the lock count (taking the smaller of the preset and remaining space), never leaving you with no digits to fill.',
+  "rules.chancesText":'Chances are evaluated from answer digits, guess digits, and advanced settings — more advanced options mean higher difficulty and more recommended chances. The "Chance Limit" toggle in advanced settings is on by default (limited chances, more thrilling); turn it off for pure deduction mode with unlimited guesses, focusing on reasoning. You can also manually adjust the number in the input. Running out of chances without winning = failure and the answer is revealed.',
+}
+};
+
+function t(key, vars){
+  let s = (I18N[currentLang] && I18N[currentLang][key]) || I18N.zh[key] || key;
+  if(vars){
+    for(const k in vars){ s = s.replace("{" + k + "}", vars[k]); }
+  }
+  return s;
+}
+function diffLabel(lvl){
+  const arr = currentLang === "en" ? DIFF_LABEL_EN : DIFF_LABEL_ZH;
+  return arr[Math.min(lvl, 7)];
+}
+function applyLang(lang){
+  currentLang = lang;
+  document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    const key = el.getAttribute("data-i18n");
+    el.textContent = t(key);
+  });
+  document.querySelectorAll("[data-i18n-html]").forEach(el=>{
+    const key = el.getAttribute("data-i18n-html");
+    el.innerHTML = t(key);
+  });
+  // 更新语言按钮
+  const langBtn = $("navLang");
+  if(langBtn) langBtn.textContent = t("nav.lang");
+  if(typeof refreshDigitOptionLabels === "function") refreshDigitOptionLabels();
+  // 更新难度与设置区
+  if(typeof updateDifficultyUI === "function") updateDifficultyUI();
+  // 更新信息栏（如果在游戏中）
+  if(typeof updateInfoBar === "function" && !gameCard.classList.contains("hidden")) updateInfoBar();
+  // 更新横幅（如果游戏结束）
+  if(state.over && typeof renderBanner === "function") renderBanner();
+  // 更新记录区
+  if(typeof renderAllRecords === "function") renderAllRecords();
+}
+
+
+/* ============================================================
+ * 常量与难度表
+ * ============================================================ */
+const DIFF_TABLE = {
+  "2,1":0.5,"2,2":0.3,
+  "3,1":1.0,"3,2":0.5,"3,3":0.4,
+  "4,1":1.6,"4,2":1.2,"4,3":0.7,"4,4":0.5,
+  "5,1":2.0,"5,2":1.6,"5,3":1.2,"5,4":0.7,"5,5":0.5,
+  "6,1":2.4,"6,2":2.0,"6,3":1.6,"6,4":1.2,"6,5":0.7,"6,6":0.6,
+  "7,1":2.8,"7,2":2.4,"7,3":2.0,"7,4":1.6,"7,5":1.2,"7,6":0.7,"7,7":0.6,
+  "8,1":3.2,"8,2":2.8,"8,3":2.4,"8,4":2.0,"8,5":1.6,"8,6":1.2,"8,7":0.7,"8,8":0.6,
+  "9,1":3.6,"9,2":3.2,"9,3":2.8,"9,4":2.4,"9,5":2.0,"9,6":1.6,"9,7":1.2,"9,8":0.7,"9,9":0.7,
+  "10,1":4.0,"10,2":3.6,"10,3":3.2,"10,4":2.8,"10,5":2.4,"10,6":2.0,"10,7":1.6,"10,8":1.2,"10,9":0.7,"10,10":0.7
+};
+const NOT_REC = new Set(["3,1","4,1","5,1","6,1","7,1","8,1","9,1","10,1","10,2"]);
+const DIFF_STARS = ["","★","★★","★★★","★★★★","★★★★★","★★★★★★","★★★★★★★"];
+
+/* ============================================================
+ * 游戏状态
+ * ============================================================ */
+const state = {
+  x:0, y:0,
+  answer:[],
+  total:0, used:0,
+  history:[],
+  covered:new Set(),
+  slots:[],
+  over:false,
+  // 进阶设置
+  dynamicY:false,
+  delay:"off",       // off | mild | hardcore
+  bOnly:false,
+  lockCount:0,
+  unlimited:false,
+  // 每轮状态
+  yRound:0,
+  frozenSet:new Set(),
+  pendingFeedback:null  // {round, a, b} 上一轮未揭晓的反馈
+};
+
+/* ============================================================
+ * 设置项引用
+ * ============================================================ */
+const selX = $("selX"), selY = $("selY");
+const selDelay = $("selDelay"), selLock = $("selLock");
+const toggleDynY = $("toggleDynY"), toggleBOnly = $("toggleBOnly"), toggleUnlimited = $("toggleUnlimited");
+const diffDisplay = $("diffDisplay");
+const chancesInput = $("chancesInput"), chancesRec = $("chancesRec");
+const diffNote = $("diffNote");
+let suppressYChange = false;
+
+/* ============================================================
+ * 粒子背景
+ * ============================================================ */
+function initParticles(){
+  const box = $("particles");
+  const chars = "0123456789";
+  for(let i=0;i<22;i++){
+    const p = document.createElement("div");
+    p.className = "particle";
+    p.textContent = chars[Math.floor(Math.random()*chars.length)];
+    p.style.left = Math.random()*100 + "%";
+    p.style.fontSize = (16 + Math.random()*28) + "px";
+    p.style.animationDuration = (16 + Math.random()*22) + "s";
+    p.style.animationDelay = (-Math.random()*30) + "s";
+    box.appendChild(p);
+  }
+}
+
+/* ============================================================
+ * 设置区初始化
+ * ============================================================ */
+function initSelects(){
+  for(let x=2;x<=10;x++){
+    const o = document.createElement("option");
+    o.value = x; o.textContent = x + " " + t("setup.digitUnit");
+    selX.appendChild(o);
+  }
+  selX.value = "5";
+  rebuildYOptions(5);
+}
+function rebuildYOptions(x){
+  const cur = selY.value ? +selY.value : 3;
+  selY.innerHTML = "";
+  for(let y=1;y<=x;y++){
+    const o = document.createElement("option");
+    o.value = y; o.textContent = y + " " + t("setup.digitUnit");
+    selY.appendChild(o);
+  }
+  selY.value = Math.min(cur, x);
+}
+function refreshDigitOptionLabels(){
+  [...selX.options, ...selY.options].forEach(option=>{
+    option.textContent = option.value + " " + t("setup.digitUnit");
+  });
+}
+
+/* ---- 开关通用逻辑 ---- */
+function setToggle(el, on){
+  if(on){ el.classList.add("on"); el.setAttribute("aria-checked","true"); }
+  else  { el.classList.remove("on"); el.setAttribute("aria-checked","false"); }
+}
+function bindToggle(el, getVal, setVal){
+  const handler = ()=>{ setVal(!getVal()); };
+  el.addEventListener("click", handler);
+  el.addEventListener("keydown", e=>{
+    if(e.key === " " || e.key === "Enter"){ e.preventDefault(); handler(); }
+  });
+}
+bindToggle(toggleDynY, ()=>state.dynamicY, v=>{
+  state.dynamicY = v; setToggle(toggleDynY, v); updateDifficultyUI();
+});
+bindToggle(toggleBOnly, ()=>state.bOnly, v=>{
+  state.bOnly = v; setToggle(toggleBOnly, v);
+  updateDifficultyUI();
+});
+bindToggle(toggleUnlimited, ()=>!state.unlimited, v=>{
+  // v=true(开关开) → 有限次数(unlimited=false)
+  // v=false(开关关) → 无限制(unlimited=true)
+  state.unlimited = !v; setToggle(toggleUnlimited, v);
+  if(state.unlimited){
+    chancesInput.disabled = true;
+    chancesInput.value = "";
+    chancesRec.textContent = t("setup.unlimited");
+  } else {
+    chancesInput.disabled = false;
+    chancesInput.dataset.touched = "0";
+    updateDifficultyUI();
+  }
+});
+
+selX.addEventListener("change", ()=>{
+  const x = +selX.value;
+  suppressYChange = true;
+  rebuildYOptions(x);
+  suppressYChange = false;
+  // 位置锁定上限检查
+  checkLockLimit();
+  updateDifficultyUI();
+});
+selY.addEventListener("change", ()=>{
+  if(suppressYChange) return;
+  checkLockLimit();
+  updateDifficultyUI();
+});
+selDelay.addEventListener("change", ()=>{
+  state.delay = selDelay.value;
+  updateDifficultyUI();
+});
+selLock.addEventListener("change", ()=>{
+  checkLockLimit();
+  updateDifficultyUI();
+});
+chancesInput.addEventListener("input", ()=>{
+  chancesInput.dataset.touched = "1";
+  const raw = chancesInput.value.trim();
+  if(raw === ""){
+    chancesRec.textContent = t("setup.recCustom", {n: calcChances()});
+    return;
+  }
+  let v = Number(raw);
+  if(!Number.isFinite(v)) v = calcChances();
+  v = Math.trunc(v);
+  v = Math.max(1, Math.min(999999, v));
+  chancesInput.value = String(v);
+  chancesRec.textContent = t("setup.recCustom", {n: calcChances()});
+});
+chancesInput.addEventListener("change", ()=>{
+  let v = Number(chancesInput.value);
+  if(!Number.isFinite(v)) v = calcChances();
+  v = Math.max(1, Math.min(999999, Math.trunc(v)));
+  chancesInput.value = String(v);
+});
+
+function checkLockLimit(){
+  const x = +selX.value, y = +selY.value;
+  const maxLock = Math.max(0, x - y);
+  let lockVal = +selLock.value;
+  if(lockVal > maxLock){
+    lockVal = maxLock;
+    selLock.value = String(lockVal);
+    showToast(t("toast.lockAdjusted", {n: lockVal, max: x-y}));
+  }
+  // 更新选项可用性
+  [...selLock.options].forEach(opt=>{
+    const v = +opt.value;
+    opt.disabled = (v > 0 && v > maxLock);
+  });
+  state.lockCount = +selLock.value;
+}
+
+/* ============================================================
+ * 难度评估与机会次数计算
+ * ============================================================ */
+function calcDifficulty(){
+  const x = +selX.value, y = +selY.value;
+  const key = x + "," + y;
+  const raw = DIFF_TABLE[key];
+  const baseDiff = raw === undefined ? 4.0 : raw;
+  let bonus = 0;
+  if(state.dynamicY) bonus += 0.2;
+  if(state.delay === "mild") bonus += 0.3;
+  if(state.delay === "hardcore") bonus += 0.6;
+  if(state.bOnly) bonus += 0.5;
+  if(state.lockCount > 0) bonus += 0.15 * state.lockCount;
+  const totalDiff = baseDiff + bonus;
+  return { x, y, baseDiff, bonus, totalDiff, notRec: NOT_REC.has(key) };
+}
+function calcChances(){
+  const info = calcDifficulty();
+  const baseN = info.notRec ? 31 : Math.round(6 + 5 * info.baseDiff);
+  const N = Math.round(baseN * (1 + info.bonus));
+  return Math.max(5, Math.min(99, N));
+}
+function diffLevel(d){
+  if(d < 0.6) return 1;
+  if(d < 1.1) return 2;
+  if(d < 1.6) return 3;
+  if(d < 2.1) return 4;
+  if(d < 2.6) return 5;
+  if(d < 3.1) return 6;
+  if(d < 3.6) return 7;
+  return 8;
+}
+function updateDifficultyUI(){
+  const info = calcDifficulty();
+  const lvl = diffLevel(info.totalDiff);
+  const stars = DIFF_STARS[Math.min(lvl, 7)];
+  const label = diffLabel(lvl);
+  
+  if(info.notRec){
+    diffDisplay.innerHTML =
+      '<span class="not-rec">' + t("diff.0") + '</span>' +
+      '<span class="stars">★★★★★</span>' +
+      '<span class="diff-val">' + t("diffpart.notRec") + '</span>';
+  } else {
+    const full = "★★★★★★★★★".slice(0, lvl);
+    const empty = "★★★★★★★★★".slice(0, Math.max(0, 8 - lvl));
+    diffDisplay.innerHTML =
+      '<span class="diff-label">' + label + '</span>' +
+      '<span class="stars">' + full + '<span class="empty">' + empty + '</span></span>' +
+      '<span class="diff-val">' + t("diffpart.base", {v: info.totalDiff.toFixed(1)}) + '</span>';
+  }
+  diffDisplay.classList.remove("bounce");
+  void diffDisplay.offsetWidth;
+  diffDisplay.classList.add("bounce");
+  
+  // 推荐次数
+  const rec = calcChances();
+  if(!state.unlimited){
+    if(chancesInput.dataset.touched !== "1"){
+      chancesInput.value = rec;
+      chancesRec.textContent = t("setup.rec", {n: rec});
+    } else {
+      chancesRec.textContent = t("setup.recCustom", {n: rec});
+    }
+  }
+  
+  // 难度说明
+  const parts = [];
+  if(info.notRec){ parts.push(t("diffpart.notRec")); }
+  else { parts.push(t("diffpart.base", {v: info.baseDiff.toFixed(1)})); }
+  if(state.dynamicY) parts.push(t("diffpart.dynamicY"));
+  if(state.delay === "mild") parts.push(t("diffpart.mild"));
+  if(state.delay === "hardcore") parts.push(t("diffpart.hardcore"));
+  if(state.bOnly) parts.push(t("diffpart.bOnly"));
+  if(state.lockCount > 0) parts.push(t("diffpart.lock", {n: state.lockCount, v: (0.15*state.lockCount).toFixed(2)}));
+  diffNote.textContent = t("diffnote", {parts: parts.join(" · ")});
+}
+
+/* ============================================================
+ * 规则弹窗
+ * ============================================================ */
+const rulesModal = $("rulesModal");
+let rulesFirstOpen = true;
+function openRules(){
+  rulesModal.classList.add("show");
+  if(rulesFirstOpen){
+    rulesFirstOpen = false;
+    setTimeout(()=> runDemoBasic(), 300);
+  }
+}
+function closeRules(){ rulesModal.classList.remove("show"); }
+$("navRules").addEventListener("click", openRules);
+$("rulesClose").addEventListener("click", closeRules);
+rulesModal.addEventListener("click", e=>{
+  if(e.target === rulesModal) closeRules();
+});
+document.addEventListener("keydown", e=>{
+  if(e.key === "Escape" && rulesModal.classList.contains("show")) closeRules();
+});
+
+/* ============================================================
+ * 动画工具函数
+ * ============================================================ */
+function makeTiles(parent, chars, opts){
+  opts = opts || {};
+  parent.innerHTML = "";
+  const arr = [];
+  for(let i=0;i<chars.length;i++){
+    const d = document.createElement("div");
+    d.className = "dtile";
+    if(chars[i] === "-"){ d.classList.add("maskd"); d.textContent = "-"; }
+    else { d.textContent = chars[i]; }
+    if(opts.locked && opts.locked.indexOf(i) >= 0){ d.classList.add("locked"); }
+    parent.appendChild(d);
+    arr.push(d);
+  }
+  return arr;
+}
+function showTiles(arr, delay){
+  delay = delay || 0;
+  arr.forEach((el, i)=>{
+    setTimeout(()=> el.classList.add("show"), delay + i*80);
+  });
+}
+function wait(ms){ return new Promise(r=> setTimeout(r, ms)); }
+
+/* ============================================================
+ * 动画 1：基础 A/B 反馈与覆盖获胜
+ * 答案 38157，x=5，y=3
+ * 第1轮 365-- → 1A1B（3对位，5在答案但错位）
+ * 第2轮 381-- → 3A0B（3、8、1全对位，覆盖位置0、1、2）
+ * 第3轮 --157 → 3A0B（1、5、7全对位，覆盖位置2、3、4）
+ * 两轮命中合起来覆盖全部5个位置，胜利
+ * ============================================================ */
+const demoBasicPlan = [
+  { seq:"365--", a:1, b:1, marks:["a","","b","",""] },
+  { seq:"381--", a:3, b:0, marks:["a","a","a","",""] },
+  { seq:"--157", a:3, b:0, marks:["","","a","a","a"] }
+];
+async function runDemoBasic(){
+  const ansEl = $("demoBasicAnswer");
+  const rowsEl = $("demoBasicRows");
+  const winEl = $("demoBasicWin");
+  rowsEl.innerHTML = "";
+  winEl.classList.remove("show");
+  
+  const ansTiles = makeTiles(ansEl, "38157");
+  showTiles(ansTiles, 100);
+  await wait(700);
+  
+  for(let r=0;r<demoBasicPlan.length;r++){
+    const plan = demoBasicPlan[r];
+    const row = document.createElement("div");
+    row.className = "drow current";
+    const idx = document.createElement("span");
+    idx.className = "rec-idx"; idx.textContent = "#" + (r+1);
+    const seqWrap = document.createElement("div");
+    seqWrap.className = "dtiles";
+    row.appendChild(idx);
+    row.appendChild(seqWrap);
+    rowsEl.appendChild(row);
+    
+    const tiles = makeTiles(seqWrap, plan.seq);
+    showTiles(tiles, 0);
+    await wait(600);
+    
+    // 标记 A/B
+    tiles.forEach((t, i)=>{
+      if(plan.marks[i] === "a") t.classList.add("mark-a");
+      else if(plan.marks[i] === "b") t.classList.add("mark-b");
+    });
+    await wait(400);
+    
+    // 反馈
+    const fb = document.createElement("div");
+    fb.className = "dfb";
+    if(plan.b === 0 && plan.a < 5){
+      fb.innerHTML = '<span class="a">' + plan.a + 'A</span><span class="zero">0B</span>';
+    } else if(plan.a === 5){
+      fb.innerHTML = '<span class="a">' + plan.a + 'A</span><span class="zero">0B</span>';
+    } else {
+      fb.innerHTML = '<span class="a">' + plan.a + 'A</span><span class="b">' + plan.b + 'B</span>';
+    }
+    row.appendChild(fb);
+    setTimeout(()=> fb.classList.add("show"), 50);
+    row.classList.remove("current");
+    await wait(700);
+  }
+  
+  // 胜利
+  winEl.classList.add("show");
+}
+$("demoBasicReplay").addEventListener("click", runDemoBasic);
+
+/* ============================================================
+ * 动画 2：动态位数
+ * 答案 38157，基础 y=3
+ * 第1轮 y=2，猜 3-5-- → 1A1B（3对位，5在答案但错位），未命中
+ * 第2轮 y=4，猜 3815- → 4A0B（3、8、1、5全对位），命中，覆盖0,1,2,3
+ * 第3轮 y=3，猜 --157 → 3A0B（1、5、7全对位），命中，覆盖2,3,4
+ * 两轮命中合起来覆盖全部5个位置，胜利
+ * ============================================================ */
+const demoDynPlan = [
+  { yRound:2, seq:"3-5--", a:1, b:1, marks:["a","","b","",""], cover:[] },
+  { yRound:4, seq:"3815-", a:4, b:0, marks:["a","a","a","a",""], cover:[0,1,2,3] },
+  { yRound:3, seq:"--157", a:3, b:0, marks:["","","a","a","a"], cover:[2,3,4] }
+];
+async function runDemoDyn(){
+  const ansEl = $("demoDynAnswer");
+  const rowsEl = $("demoDynRows");
+  const winEl = $("demoDynWin");
+  rowsEl.innerHTML = "";
+  winEl.classList.remove("show");
+  
+  const ansTiles = makeTiles(ansEl, "38157");
+  showTiles(ansTiles, 100);
+  await wait(700);
+  
+  const covered = new Set();
+  for(let r=0;r<demoDynPlan.length;r++){
+    const plan = demoDynPlan[r];
+    const row = document.createElement("div");
+    row.className = "drow current";
+    
+    const badge = document.createElement("div");
+    badge.className = "dtile y-badge";
+    badge.textContent = t("demo.round", {n: plan.yRound});
+    row.appendChild(badge);
+    
+    const seqWrap = document.createElement("div");
+    seqWrap.className = "dtiles";
+    row.appendChild(seqWrap);
+    rowsEl.appendChild(row);
+    
+    const tiles = makeTiles(seqWrap, plan.seq);
+    showTiles(tiles, 0);
+    await wait(600);
+    
+    tiles.forEach((t, i)=>{
+      if(plan.marks[i] === "a") t.classList.add("mark-a");
+      else if(plan.marks[i] === "b") t.classList.add("mark-b");
+    });
+    await wait(400);
+    
+    const fb = document.createElement("div");
+    fb.className = "dfb";
+    if(plan.b === 0){
+      fb.innerHTML = '<span class="a">' + plan.a + 'A</span><span class="zero">0B</span>';
+    } else {
+      fb.innerHTML = '<span class="a">' + plan.a + 'A</span><span class="b">' + plan.b + 'B</span>';
+    }
+    row.appendChild(fb);
+    setTimeout(()=> fb.classList.add("show"), 50);
+    
+    // 标记已覆盖位置
+    plan.cover.forEach(p => covered.add(p));
+    row.classList.remove("current");
+    await wait(700);
+  }
+  
+  // 标记答案中已覆盖的位置
+  const ansTiles2 = ansEl.querySelectorAll(".dtile");
+  covered.forEach(p=>{
+    if(ansTiles2[p]) ansTiles2[p].classList.add("confirmed");
+  });
+  await wait(400);
+  winEl.classList.add("show");
+}
+$("demoDynReplay").addEventListener("click", runDemoDyn);
+
+/* ============================================================
+ * 动画 3：延迟反馈（硬核）
+ * 答案 38157，y=3
+ * 第1轮 365-- → 待揭晓（实际1A1B）
+ * 第2轮 381-- → 揭示第1轮=1A1B，本轮待揭晓（实际3A0B，命中覆盖0,1,2）
+ * 第3轮 --157 → 揭示第2轮=3A0B，本轮=3A0B（命中覆盖2,3,4）→ 胜利
+ * ============================================================ */
+const demoDelayPlan = [
+  { seq:"365--", a:1, b:1 },
+  { seq:"381--", a:3, b:0 },
+  { seq:"--157", a:3, b:0 }
+];
+async function runDemoDelay(){
+  const ansEl = $("demoDelayAnswer");
+  const rowsEl = $("demoDelayRows");
+  const winEl = $("demoDelayWin");
+  rowsEl.innerHTML = "";
+  winEl.classList.remove("show");
+  
+  const ansTiles = makeTiles(ansEl, "38157");
+  showTiles(ansTiles, 100);
+  await wait(700);
+  
+  const rowEls = [];
+  const fbEls = [];
+  let pendingIdx = -1;  // 待揭晓的轮次索引
+  
+  for(let r=0;r<demoDelayPlan.length;r++){
+    const plan = demoDelayPlan[r];
+    const row = document.createElement("div");
+    row.className = "drow current";
+    const idx = document.createElement("span");
+    idx.className = "rec-idx"; idx.textContent = "#" + (r+1);
+    const seqWrap = document.createElement("div");
+    seqWrap.className = "dtiles";
+    row.appendChild(idx);
+    row.appendChild(seqWrap);
+    rowsEl.appendChild(row);
+    
+    const tiles = makeTiles(seqWrap, plan.seq);
+    showTiles(tiles, 0);
+    await wait(500);
+    
+    // 反馈占位
+    const fb = document.createElement("div");
+    fb.className = "dfb";
+    fb.innerHTML = '<span class="pending">' + t("demo.pending") + '</span>';
+    row.appendChild(fb);
+    setTimeout(()=> fb.classList.add("show"), 50);
+    rowEls.push(row);
+    fbEls.push(fb);
+    
+    // 如果有待揭晓的上一轮，现在揭晓
+    if(pendingIdx >= 0){
+      const prevPlan = demoDelayPlan[pendingIdx];
+      const prevFb = fbEls[pendingIdx];
+      prevFb.innerHTML = "";
+      const a = document.createElement("span"); a.className = "a"; a.textContent = prevPlan.a + "A";
+      const b = document.createElement("span");
+      if(prevPlan.b === 0){ b.className = "zero"; b.textContent = "0B"; }
+      else { b.className = "b"; b.textContent = prevPlan.b + "B"; }
+      prevFb.appendChild(a);
+      prevFb.appendChild(b);
+      await wait(500);
+    }
+    
+    row.classList.remove("current");
+    pendingIdx = r;
+    await wait(500);
+  }
+  
+  // 最后揭晓最后一轮
+  if(pendingIdx >= 0){
+    const prevPlan = demoDelayPlan[pendingIdx];
+    const prevFb = fbEls[pendingIdx];
+    prevFb.innerHTML = "";
+    const a = document.createElement("span"); a.className = "a"; a.textContent = prevPlan.a + "A";
+    const b = document.createElement("span");
+    if(prevPlan.b === 0){ b.className = "zero"; b.textContent = "0B"; }
+    else { b.className = "b"; b.textContent = prevPlan.b + "B"; }
+    prevFb.appendChild(a);
+    prevFb.appendChild(b);
+    await wait(500);
+  }
+  
+  winEl.classList.add("show");
+}
+$("demoDelayReplay").addEventListener("click", runDemoDelay);
+
+/* ============================================================
+ * 动画 4：仅显示 B
+ * 答案 38157，x=y=5
+ * 第1轮 36512 → 后台1A1B，只显示1B
+ * 第2轮 38157 → 后台5A0B，只显示0B（0B的两种可能：0A0B或5A0B）
+ *   揭示：实际是5A0B → 胜利
+ * ============================================================ */
+const demoBOnlyPlan = [
+  { seq:"36512", realA:1, realB:1, showB:1 },
+  { seq:"38157", realA:5, realB:0, showB:0 }
+];
+async function runDemoBOnly(){
+  const ansEl = $("demoBOnlyAnswer");
+  const rowsEl = $("demoBOnlyRows");
+  const winEl = $("demoBOnlyWin");
+  rowsEl.innerHTML = "";
+  winEl.classList.remove("show");
+  
+  const ansTiles = makeTiles(ansEl, "38157");
+  showTiles(ansTiles, 100);
+  await wait(700);
+  
+  for(let r=0;r<demoBOnlyPlan.length;r++){
+    const plan = demoBOnlyPlan[r];
+    const row = document.createElement("div");
+    row.className = "drow current";
+    const idx = document.createElement("span");
+    idx.className = "rec-idx"; idx.textContent = "#" + (r+1);
+    const seqWrap = document.createElement("div");
+    seqWrap.className = "dtiles";
+    row.appendChild(idx);
+    row.appendChild(seqWrap);
+    rowsEl.appendChild(row);
+    
+    const tiles = makeTiles(seqWrap, plan.seq);
+    showTiles(tiles, 0);
+    await wait(600);
+    
+    // 只显示 B
+    const fb = document.createElement("div");
+    fb.className = "dfb";
+    if(plan.showB === 0){
+      fb.innerHTML = '<span class="b-only">0B</span>';
+    } else {
+      fb.innerHTML = '<span class="b-only">' + plan.showB + 'B</span>';
+    }
+    row.appendChild(fb);
+    setTimeout(()=> fb.classList.add("show"), 50);
+    
+    // 第二轮特别说明 0B 的歧义
+    if(r === 1){
+      const note = document.createElement("div");
+      note.className = "demo-note";
+      note.style.marginTop = "6px";
+      note.innerHTML = t("demo.bOnlyNote", {a:'<span class="fa">5A0B</span>', b:'<span class="fb">0A0B</span>'});
+      row.appendChild(note);
+      await wait(800);
+    }
+    
+    row.classList.remove("current");
+    await wait(600);
+  }
+  
+  winEl.classList.add("show");
+}
+$("demoBOnlyReplay").addEventListener("click", runDemoBOnly);
+
+/* ============================================================
+ * 动画 5：位置锁定
+ * 答案 38157，x=5，y=3，锁定2个
+ * 第1轮 锁定位置{1,3}，猜 3-1-7 → 3A0B，覆盖0,2,4
+ * 第2轮 锁定位置{0,2}，猜 -8-57 → 3A0B，覆盖1,3,4（4已覆盖）
+ *   实际：位置1=8(A)，位置3=5(A)，位置4=7(A) → 覆盖1,3,4
+ *   但4已覆盖，所以新增1,3 → 全部5个位置覆盖 → 胜利
+ * ============================================================ */
+const demoLockPlan = [
+  { locked:[1,3], seq:"3-1-7", a:3, b:0, marks:["a","","a","","a"], cover:[0,2,4] },
+  { locked:[0,2], seq:"-8-57", a:3, b:0, marks:["","a","","a","a"], cover:[1,3,4] }
+];
+async function runDemoLock(){
+  const ansEl = $("demoLockAnswer");
+  const rowsEl = $("demoLockRows");
+  const winEl = $("demoLockWin");
+  rowsEl.innerHTML = "";
+  winEl.classList.remove("show");
+  
+  const ansTiles = makeTiles(ansEl, "38157");
+  showTiles(ansTiles, 100);
+  await wait(700);
+  
+  const covered = new Set();
+  for(let r=0;r<demoLockPlan.length;r++){
+    const plan = demoLockPlan[r];
+    const row = document.createElement("div");
+    row.className = "drow current";
+    const idx = document.createElement("span");
+    idx.className = "rec-idx"; idx.textContent = "#" + (r+1);
+    const seqWrap = document.createElement("div");
+    seqWrap.className = "dtiles";
+    row.appendChild(idx);
+    row.appendChild(seqWrap);
+    rowsEl.appendChild(row);
+    
+    // 创建带锁定的 tiles
+    seqWrap.innerHTML = "";
+    const tiles = [];
+    for(let i=0;i<plan.seq.length;i++){
+      const d = document.createElement("div");
+      d.className = "dtile";
+      if(plan.locked.indexOf(i) >= 0){
+        d.classList.add("locked");
+        d.textContent = "-";
+      } else {
+        d.textContent = plan.seq[i];
+      }
+      seqWrap.appendChild(d);
+      tiles.push(d);
+      setTimeout(()=> d.classList.add("show"), i*80);
+    }
+    await wait(700);
+    
+    // 标记 A/B（只标记非锁定的）
+    tiles.forEach((t, i)=>{
+      if(plan.locked.indexOf(i) >= 0) return;
+      if(plan.marks[i] === "a") t.classList.add("mark-a");
+      else if(plan.marks[i] === "b") t.classList.add("mark-b");
+    });
+    await wait(400);
+    
+    const fb = document.createElement("div");
+    fb.className = "dfb";
+    fb.innerHTML = '<span class="a">' + plan.a + 'A</span><span class="zero">0B</span>';
+    row.appendChild(fb);
+    setTimeout(()=> fb.classList.add("show"), 50);
+    
+    plan.cover.forEach(p => covered.add(p));
+    row.classList.remove("current");
+    await wait(700);
+  }
+  
+  const ansTiles2 = ansEl.querySelectorAll(".dtile");
+  covered.forEach(p=>{
+    if(ansTiles2[p]) ansTiles2[p].classList.add("confirmed");
+  });
+  await wait(400);
+  winEl.classList.add("show");
+}
+$("demoLockReplay").addEventListener("click", runDemoLock);
+
+/* ============================================================
+ * 游戏元素引用
+ * ============================================================ */
+const setupCard = $("setupCard"), gameCard = $("gameCard");
+const infoHighlight = $("infoHighlight");
+const infoMeta = $("infoMeta");
+const progFill = $("progFill");
+const recordsEl = $("records");
+const bannerEl = $("banner");
+const slotsEl = $("slots");
+const keypadEl = $("keypad");
+const submitBtn = $("submitBtn"), backBtn = $("backBtn");
+const toastEl = $("toast");
+
+/* ============================================================
+ * 工具函数
+ * ============================================================ */
+function showToast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=> toastEl.classList.remove("show"), 2200);
+}
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+function digitCount(){ return state.slots.filter(s=> s && s.t==="d").length; }
+function maskCount(){ return state.slots.filter(s=> s && s.t==="m").length; }
+
+/* ============================================================
+ * 生成答案
+ * ============================================================ */
+function genAnswer(x){
+  const pool = shuffle([0,1,2,3,4,5,6,7,8,9]);
+  return pool.slice(0, x);
+}
+
+/* ============================================================
+ * 生成本轮 y 与锁定位置
+ * ============================================================ */
+function genYRound(yBase, x){
+  if(!state.dynamicY) return yBase;
+  if(yBase === 1) return 1;
+  if(yBase >= x) return Math.random() < 0.5 ? x : Math.max(1, x-1);
+  const lo = Math.max(1, yBase - 1);
+  const hi = Math.min(x, yBase + 1);
+  return lo + Math.floor(Math.random() * (hi - lo + 1));
+}
+function calcFRound(yRound, x){
+  if(state.lockCount <= 0) return 0;
+  if(state.y === x) return 0;
+  if(yRound >= x) return 0;
+  return Math.min(state.lockCount, x - yRound);
+}
+function genFrozenSet(fRound, x){
+  if(fRound <= 0) return new Set();
+  const positions = shuffle([...Array(x).keys()]);
+  return new Set(positions.slice(0, fRound));
+}
+
+/* ============================================================
+ * 生成本轮（y 与锁定位置）
+ * ============================================================ */
+function generateRound(){
+  state.yRound = genYRound(state.y, state.x);
+  const fRound = calcFRound(state.yRound, state.x);
+  state.frozenSet = genFrozenSet(fRound, state.x);
+  // 初始化 slots，锁定位置预填遮蔽符
+  state.slots = Array(state.x).fill(null);
+  for(const i of state.frozenSet){
+    state.slots[i] = { t:"m", frozen:true };
+  }
+  buildSlots();
+}
+
+/* ============================================================
+ * 构建 slot DOM
+ * ============================================================ */
+function buildSlots(){
+  slotsEl.innerHTML = "";
+  for(let i=0;i<state.x;i++){
+    const d = document.createElement("div");
+    d.className = "slot";
+    if(state.frozenSet.has(i)){
+      d.classList.add("locked");
+    } else {
+      d.addEventListener("click", ()=> removeAt(i));
+    }
+    slotsEl.appendChild(d);
+  }
+  renderInput();
+}
+
+/* ============================================================
+ * 渲染输入区
+ * ============================================================ */
+function renderInput(){
+  [...slotsEl.children].forEach((el, i)=>{
+    if(state.frozenSet.has(i)){
+      el.className = "slot locked";
+      el.textContent = "";
+      return;
+    }
+    const s = state.slots[i];
+    if(!s){
+      el.className = "slot";
+      el.textContent = "";
+    } else if(s.t === "d"){
+      el.className = "slot filled";
+      el.textContent = s.v;
+    } else {
+      el.className = "slot masked";
+      el.textContent = "-";
+    }
+  });
+  
+  // 数字键
+  const usedDigits = new Set();
+  state.slots.forEach(s=>{ if(s && s.t==="d") usedDigits.add(s.v); });
+  [...keypadEl.querySelectorAll(".key.dkey")].forEach(k=>{
+    const n = +k.dataset.n;
+    k.disabled = state.over || usedDigits.has(n) || digitCount() >= state.yRound;
+  });
+  
+  // 遮蔽键
+  const mk = keypadEl.querySelector(".mask-key");
+  if(mk){
+    const mc = maskCount();
+    const leftMask = state.x - state.yRound - mc;
+    mk.disabled = state.over || leftMask <= 0 || !state.slots.some(s=> !s);
+    const badge = mk.querySelector(".badge");
+    if(badge){ badge.textContent = t("game.maskRemaining", {n: Math.max(0, leftMask)}); }
+  }
+  
+  // 提交按钮
+  submitBtn.disabled = state.over || !(digitCount() === state.yRound && maskCount() === state.x - state.yRound);
+}
+
+/* ============================================================
+ * 构建键盘
+ * ============================================================ */
+function buildKeypad(){
+  keypadEl.innerHTML = "";
+  for(let n=0;n<=9;n++){
+    const k = document.createElement("button");
+    k.className = "key dkey";
+    k.dataset.n = n;
+    k.textContent = n;
+    k.addEventListener("click", ()=> pressDigit(n));
+    keypadEl.appendChild(k);
+  }
+  const mk = document.createElement("button");
+  mk.className = "key mask-key";
+  mk.innerHTML = '-<span class="badge"></span>';
+  mk.querySelector(".badge").textContent = t("game.maskRemaining", {n: 0});
+  mk.addEventListener("click", pressMask);
+  keypadEl.appendChild(mk);
+}
+
+/* ============================================================
+ * 输入操作
+ * ============================================================ */
+function pressDigit(n){
+  if(state.over) return;
+  if(state.slots.some(s=> s && s.t==="d" && s.v === n)) return;
+  if(digitCount() >= state.yRound) return;
+  const i = state.slots.findIndex(s=> !s);
+  if(i < 0) return;
+  state.slots[i] = { t:"d", v:n };
+  renderInput();
+}
+function pressMask(){
+  if(state.over) return;
+  const mc = maskCount();
+  if(mc >= state.x - state.yRound) return;
+  const i = state.slots.findIndex(s=> !s);
+  if(i < 0) return;
+  state.slots[i] = { t:"m" };
+  renderInput();
+}
+function removeAt(i){
+  if(state.over) return;
+  if(state.frozenSet.has(i)) return;
+  const s = state.slots[i];
+  if(s && !s.frozen){
+    state.slots[i] = null;
+    renderInput();
+  }
+}
+function backspace(){
+  if(state.over) return;
+  for(let i=state.x-1;i>=0;i--){
+    if(state.frozenSet.has(i)) continue;
+    if(state.slots[i] && !state.slots[i].frozen){
+      state.slots[i] = null;
+      renderInput();
+      return;
+    }
+  }
+}
+
+/* ============================================================
+ * 评估 A/B
+ * ============================================================ */
+function evaluate(){
+  let a = 0, b = 0;
+  const remainingAnswer = new Map();
+  state.slots.forEach((s, i)=>{
+    if(!s || s.t !== "d") return;
+    if(s.v === state.answer[i]) a++;
+  });
+  state.answer.forEach((v, i)=>{
+    const s = state.slots[i];
+    if(s && s.t === "d" && s.v === v) return;
+    remainingAnswer.set(v, (remainingAnswer.get(v) || 0) + 1);
+  });
+  state.slots.forEach((s, i)=>{
+    if(!s || s.t !== "d" || s.v === state.answer[i]) return;
+    const available = remainingAnswer.get(s.v) || 0;
+    if(available > 0){
+      b++;
+      remainingAnswer.set(s.v, available - 1);
+    }
+  });
+  return { a, b };
+}
+
+/* ============================================================
+ * 胜利判定
+ * ============================================================ */
+function checkWin(a){
+  // 统一获胜规则：yA0B 命中覆盖全部 x 个位置即胜
+  // x=y 时一次 yA0B（即 xA0B）即可全覆盖
+  if(a === state.yRound){
+    state.slots.forEach((s, i)=>{
+      if(s && s.t === "d") state.covered.add(i);
+    });
+  }
+  return state.covered.size >= state.x;
+}
+
+/* ============================================================
+ * 添加记录行
+ * ============================================================ */
+function addRecordRow(entry){
+  const row = document.createElement("div");
+  row.className = "rec latest";
+  row.dataset.round = entry.round;
+  if(entry.isHit && !entry.isPending && !state.bOnly) row.classList.add("success");
+  
+  const idx = document.createElement("span");
+  idx.className = "rec-idx"; idx.textContent = "#" + entry.round;
+  row.appendChild(idx);
+  
+  const seqWrap = document.createElement("div");
+  seqWrap.className = "rec-seq";
+  for(let i=0;i<entry.seq.length;i++){
+    const t = document.createElement("div");
+    const ch = entry.seq[i];
+    if(ch === "-"){
+      t.className = "rtile mask"; t.textContent = "-";
+    } else {
+      t.className = "rtile"; t.textContent = ch;
+    }
+    seqWrap.appendChild(t);
+  }
+  row.appendChild(seqWrap);
+  
+  const fb = document.createElement("div");
+  fb.className = "rec-fb";
+  row.appendChild(fb);
+  entry.fbEl = fb;
+  
+  renderFeedback(entry);
+  
+  // 移除其他行的 latest
+  [...recordsEl.querySelectorAll(".rec.latest")].forEach(r=>{
+    if(r !== row) r.classList.remove("latest");
+  });
+  recordsEl.appendChild(row);
+  recordsEl.scrollTop = recordsEl.scrollHeight;
+}
+function renderFeedback(entry){
+  const fb = entry.fbEl;
+  if(!fb) return;
+  fb.innerHTML = "";
+  
+  if(entry.isPending){
+    const p = document.createElement("span");
+    p.className = "pending"; p.textContent = t("fb.pending");
+    fb.appendChild(p);
+    return;
+  }
+  if(entry.isSum){
+    const s = document.createElement("span");
+    s.className = "sum"; s.textContent = t("fb.hit", {n: entry.a + entry.b});
+    fb.appendChild(s);
+    return;
+  }
+  
+  if(state.bOnly){
+    const b = document.createElement("span");
+    if(entry.b === 0){ b.className = "zero"; b.textContent = "0B"; }
+    else { b.className = "b"; b.textContent = entry.b + "B"; }
+    fb.appendChild(b);
+  } else {
+    const a = document.createElement("span");
+    a.className = "a"; a.textContent = entry.a + "A";
+    const b = document.createElement("span");
+    if(entry.b === 0){ b.className = "zero"; b.textContent = "0B"; }
+    else { b.className = "b"; b.textContent = entry.b + "B"; }
+    fb.appendChild(a);
+    fb.appendChild(b);
+    if(entry.isHit){
+      const mark = document.createElement("span");
+      mark.className = "hit-mark"; mark.textContent = "✓";
+      fb.appendChild(mark);
+    }
+  }
+}
+
+/* ============================================================
+ * 揭晓上一轮反馈
+ * ============================================================ */
+function revealPending(){
+  if(!state.pendingFeedback) return;
+  const pf = state.pendingFeedback;
+  const entry = state.history[pf.round - 1];
+  if(entry){
+    entry.isPending = false;
+    entry.isSum = false;
+    entry.a = pf.a;
+    entry.b = pf.b;
+    entry.isHit = (pf.a === entry.yRound);
+    renderFeedback(entry);
+    // 揭晓后若是命中行，补上成功样式
+    if(entry.isHit && !state.bOnly){
+      const row = recordsEl.querySelector('.rec[data-round="' + pf.round + '"]');
+      if(row) row.classList.add("success");
+    }
+  }
+  state.pendingFeedback = null;
+}
+
+/* ============================================================
+ * 提交猜测
+ * ============================================================ */
+function submitGuess(){
+  if(state.over || submitBtn.disabled) return;
+  
+  const dc = digitCount(), mc = maskCount();
+  if(dc !== state.yRound || mc !== state.x - state.yRound){
+    showToast(t("toast.fillRequired"));
+    return;
+  }
+  
+  const seq = state.slots.map(s=> s && s.t==="d" ? String(s.v) : "-").join("");
+  
+  // 重复检查
+  if(state.history.some(h=> h.seq === seq)){
+    showToast(t("toast.alreadyGuessed"));
+    slotsEl.classList.add("shake");
+    setTimeout(()=> slotsEl.classList.remove("shake"), 400);
+    return;
+  }
+  
+  const { a, b } = evaluate();
+  state.used++;
+  
+  // 揭晓上一轮（如果有）
+  revealPending();
+  
+  // 决定本轮显示
+  let isPending = false, isSum = false;
+  if(state.delay === "off"){
+    // 即时显示
+  } else if(state.delay === "hardcore"){
+    isPending = true;
+  } else if(state.delay === "mild"){
+    if(state.used === 1){
+      if(state.bOnly){
+        // B-only + 温和：第一轮直接显示 B（不显示 A+B 总数，避免推算 A）
+      } else {
+        isSum = true;
+      }
+    } else {
+      isPending = true;
+    }
+  }
+  
+  const entry = {
+    seq, a, b,
+    isPending, isSum,
+    round: state.used,
+    yRound: state.yRound,
+    isHit: (a === state.yRound)
+  };
+  state.history.push(entry);
+  addRecordRow(entry);
+  
+  // 设置下一轮的 pending
+  if(state.delay !== "off"){
+    // B-only + 温和第一轮已即时显示 B，无需延迟揭晓
+    if(!(state.bOnly && state.delay === "mild" && state.used === 1)){
+      state.pendingFeedback = { round: state.used, a, b };
+    }
+  }
+  
+  // 胜利判定
+  const win = checkWin(a);
+  
+  // 清空 slots
+  state.slots.fill(null);
+  
+  if(win){
+    // 揭晓所有 pending
+    if(state.pendingFeedback) revealPending();
+    endGame(true);
+    return;
+  }
+  
+  // 机会用尽
+  if(!state.unlimited && state.used >= state.total){
+    if(state.pendingFeedback) revealPending();
+    endGame(false);
+    return;
+  }
+  
+  // 生成下一轮
+  generateRound();
+  updateInfoBar();
+}
+
+/* ============================================================
+ * 信息栏与进度条
+ * ============================================================ */
+function updateInfoBar(){
+  const x = state.x, y = state.y;
+  const key = x + "," + y;
+  const d = DIFF_TABLE[key];
+  const lvl = d === undefined ? 7 : diffLevel(d + (state.dynamicY?0.2:0) + (state.delay==="mild"?0.3:0) + (state.delay==="hardcore"?0.6:0) + (state.bOnly?0.5:0) + (state.lockCount>0?0.15*state.lockCount:0));
+  const label = diffLabel(lvl);
+  
+  // 高亮区：每轮可变的信息
+  let hi = "";
+  if(state.dynamicY){
+    hi += '<span class="chip">' + t("info.canFill", {n: state.yRound}) + '</span>';
+  }
+  if(state.lockCount > 0 && state.frozenSet.size > 0){
+    hi += '<span class="chip">' + t("info.locked", {n: state.frozenSet.size}) + '</span>';
+  }
+  if(state.unlimited){
+    hi += '<span class="chip remain">' + t("info.usedUnlimited", {n: state.used}) + '</span>';
+  } else {
+    const left = state.total - state.used;
+    const cls = left <= 3 ? "remain low" : "remain";
+    hi += '<span class="chip ' + cls + '">' + t("info.remaining", {left, total: state.total}) + '</span>';
+  }
+  infoHighlight.innerHTML = hi;
+  
+  // 元信息区：全局固定设置
+  let meta = '<span class="chip">' + t("info.answer", {x}) + '</span>';
+  meta += '<span class="chip">' + t("info.base", {y}) + '</span>';
+  if(state.delay !== "off"){
+    meta += '<span class="chip">' + t(state.delay === "mild" ? "info.mildDelay" : "info.hardcoreDelay") + '</span>';
+  }
+  if(state.bOnly){
+    meta += '<span class="chip">' + t("info.bOnly") + '</span>';
+  }
+  meta += '<span class="chip">' + t("info.difficulty") + ' <b style="font-family:var(--sans)">' + label + '</b></span>';
+  infoMeta.innerHTML = meta;
+  
+  // 进度条
+  const progEl = progFill.parentElement;
+  if(state.unlimited){
+    progEl.classList.add("unlimited");
+  } else {
+    progEl.classList.remove("unlimited");
+    progFill.style.width = (state.used / state.total * 100) + "%";
+  }
+}
+
+/* ============================================================
+ * 结束游戏
+ * ============================================================ */
+function endGame(win){
+  state.over = true;
+  state.lastWin = win;
+  submitBtn.disabled = true;
+  renderBanner();
+  updateInfoBar();
+}
+function renderBanner(){
+  if(!state.over) return;
+  const win = state.lastWin;
+  bannerEl.className = "banner show " + (win ? "win" : "lose");
+  let html = "";
+  if(win){
+    html += '<div><h3>' + t("banner.winTitle") + '</h3>';
+    if(state.unlimited){
+      html += '<p>' + t("banner.winDescUnlimited", {used: state.used}) + '</p>';
+    } else {
+      html += '<p>' + t("banner.winDesc", {used: state.used, total: state.total}) + '</p>';
+    }
+    html += '</div>';
+  } else {
+    html += '<div><h3>' + t("banner.loseTitle") + '</h3>';
+    html += '<p>' + t("banner.loseDesc") + '</p></div>';
+  }
+  html += '<div class="banner-answer">';
+  for(let i=0;i<state.x;i++){
+    html += '<div class="atile">' + state.answer[i] + '</div>';
+  }
+  html += '</div>';
+  bannerEl.innerHTML = html;
+}
+
+/* ============================================================
+ * 开始游戏
+ * ============================================================ */
+function startGame(){
+  closeRules();
+  state.x = +selX.value;
+  state.y = +selY.value;
+  state.dynamicY = toggleDynY.classList.contains("on");
+  state.delay = selDelay.value;
+  state.bOnly = toggleBOnly.classList.contains("on");
+  state.lockCount = +selLock.value;
+  state.unlimited = !toggleUnlimited.classList.contains("on");
+  
+  state.answer = genAnswer(state.x);
+  const enteredChances = Number(chancesInput.value);
+  const totalChances = Number.isFinite(enteredChances)
+    ? Math.max(1, Math.min(999999, Math.trunc(enteredChances)))
+    : calcChances();
+  if(!state.unlimited) chancesInput.value = String(totalChances);
+  state.total = state.unlimited ? Infinity : totalChances;
+  state.used = 0;
+  state.history = [];
+  state.covered = new Set();
+  state.over = false;
+  state.pendingFeedback = null;
+  
+  // 切换卡片
+  setupCard.classList.add("hidden");
+  gameCard.classList.remove("hidden");
+  bannerEl.className = "banner";
+  recordsEl.innerHTML = "";
+  
+  // 构建键盘
+  buildKeypad();
+  // 生成本轮
+  generateRound();
+  updateInfoBar();
+  
+  showToast(t("toast.newGame", {x: state.x}));
+}
+
+/* ============================================================
+ * 重开 / 重新设置
+ * ============================================================ */
+function restart(){
+  closeRules();
+  // 丢弃未揭晓反馈
+  state.pendingFeedback = null;
+  state.answer = genAnswer(state.x);
+  state.used = 0;
+  state.history = [];
+  state.covered = new Set();
+  state.over = false;
+  bannerEl.className = "banner";
+  recordsEl.innerHTML = "";
+  generateRound();
+  updateInfoBar();
+  showToast(t("toast.newAnswer"));
+}
+function resetToSetup(){
+  closeRules();
+  state.pendingFeedback = null;
+  gameCard.classList.add("hidden");
+  setupCard.classList.remove("hidden");
+}
+
+/* ============================================================
+ * 事件绑定
+ * ============================================================ */
+$("startBtn").addEventListener("click", startGame);
+$("navNew").addEventListener("click", ()=>{
+  if(!gameCard.classList.contains("hidden")){
+    restart();
+  }
+});
+$("restartBtn").addEventListener("click", restart);
+$("resetBtn").addEventListener("click", resetToSetup);
+backBtn.addEventListener("click", backspace);
+submitBtn.addEventListener("click", submitGuess);
+
+// 语言切换
+$("navLang").addEventListener("click", ()=>{
+  applyLang(currentLang === "zh" ? "en" : "zh");
+});
+
+// 键盘
+document.addEventListener("keydown", e=>{
+  // 规则弹窗打开时不响应游戏键
+  if(rulesModal.classList.contains("show")) return;
+  // 设置界面不响应
+  if(!gameCard.classList.contains("hidden") && !state.over){
+    const active = document.activeElement;
+    if(active === $("navRules") || active === $("navNew") || active === $("navLang")) return;
+    if(/^[0-9]$/.test(e.key)){
+      pressDigit(+e.key);
+      e.preventDefault();
+    } else if(e.key === "-"){
+      pressMask();
+      e.preventDefault();
+    } else if(e.key === "Backspace"){
+      backspace();
+      e.preventDefault();
+    } else if(e.key === "Enter"){
+      submitGuess();
+      e.preventDefault();
+    }
+  }
+});
+
+/* ============================================================
+ * 重渲染所有记录（语言切换时调用）
+ * ============================================================ */
+function renderAllRecords(){
+  if(!recordsEl || state.history.length === 0) return;
+  recordsEl.innerHTML = "";
+  state.history.forEach(entry=>{
+    addRecordRow(entry);
+    // 移除 latest 高亮（避免重渲染时全部高亮）
+    const row = recordsEl.lastChild;
+    if(row) row.classList.remove("latest");
+  });
+  // 给最后一条加 latest
+  const last = recordsEl.lastChild;
+  if(last) last.classList.add("latest");
+}
+
+/* ============================================================
+ * 初始化
+ * ============================================================ */
+initParticles();
+initSelects();
+checkLockLimit();
+applyLang("zh");
+
+
+</script>
+</body>
+</html>
