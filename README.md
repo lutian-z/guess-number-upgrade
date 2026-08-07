@@ -126,7 +126,7 @@ These mechanisms can be **freely combined** to create hellish difficulty:
 
 ## 📱 本地运行 / Local Run
 
-1.  下载 `猜数字.html` 文件。 / Download the `猜数字.html` file.
+1.  下载 `index.html` 文件。 / Download the `index.html` file.
 2.  双击直接在浏览器中打开即可运行。 / Double-click to open directly in your browser.
 3.  无需安装 Node.js，无需搭建服务器，无需任何依赖。 / No need to install Node.js, set up a server, or any dependencies.
 
