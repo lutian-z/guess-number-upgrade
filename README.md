@@ -6,7 +6,9 @@ The **Upgrade** version of the classic logic puzzle "Bulls and Cows" (Mastermind
 
 ## 🌐 在线试玩 / Live Demo
 
-**[https://lutian-z.github.io/guess-number-upgrade/](https://lutian-z.github.io/guess-number-upgrade/)**
+**GitHub Pages**: [https://lutian-z.github.io/guess-number-upgrade/](https://lutian-z.github.io/guess-number-upgrade/)
+
+**Netlify**: [https://guessnumberupgrade.netlify.app/](https://guessnumberupgrade.netlify.app/)
 
 > 无需注册，免费无广告，打开即玩。支持移动端与桌面端完美适配。
 > No registration required, free, ad-free, play instantly. Perfectly adapted for both mobile and desktop.
