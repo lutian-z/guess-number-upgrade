@@ -25,8 +25,8 @@ The **Upgrade** version of the classic logic puzzle "Bulls and Cows" (Mastermind
     *   More than just guessing numbers; it's a comprehensive test of memory, logic, and probability.
 *   **🎬 内置互动演示 / Interactive Demos**: 规则弹窗内置各机制的动画演示，每个进阶玩法都能"一屏看懂"。
     *   Animated demos live inside the rules modal, making every advanced mechanic instantly understandable.
-*   **📅 今日挑战 / Daily Challenge**: 每日一题，同一天所有玩家拿到同一道题，可反复挑战刷新个人纪录。
-    *   One puzzle per day, shared by every player on the same date — replay it to beat your personal best.
+*   **📅 今日挑战 / Daily Challenge**: 每日一题，同一天所有玩家拿到同一道题。
+    *   One puzzle per day, shared by every player on the same date.
 
 ---
 
@@ -108,8 +108,6 @@ These mechanisms can be **freely combined** to create hellish difficulty:
 ### 4. 今日挑战 (Daily Challenge)
 *   点击顶部导航"今日挑战"一键进入：所有设置由系统随机生成，答案由当天日期决定。
     *   Hit "Daily" in the top nav to jump in: all settings are randomly generated and the answer is seeded by the date.
-*   同一天所有玩家拿到同一道题，每天可反复挑战同一难度，比较自己的最佳成绩。
-    *   Everyone gets the same puzzle on the same date, and you can replay it as many times as you like to chase your best result.
 
 ---
 
